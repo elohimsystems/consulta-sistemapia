@@ -1,0 +1,30 @@
+name: Deploy Web
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - run: flutter pub get
+
+      - run: flutter build web --dart-define=API_URL=${{ secrets.API_URL }} --release
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.6.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./build/web/
+          server-dir: ${{ secrets.FTP_WEB_DIR }}
