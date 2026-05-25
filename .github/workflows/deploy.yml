@@ -30,6 +30,6 @@ jobs:
             set net:max-retries 3;
             mirror -R --delete --verbose \
               --exclude .git \
-              ./build/web/ ${{ secrets.FTP_WEB_DIR }};
+              ./build/web/ ./;
             quit
           "
