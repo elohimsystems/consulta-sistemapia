@@ -21,13 +21,13 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
   };
 
   static const _camposDefaults = {
-    'numero': {'posicionX': '400', 'posicionY': '200', 'fontSize': '72', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': '123'},
-    'nombre': {'posicionX': '400', 'posicionY': '300', 'fontSize': '36', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Nombre Apellido'},
-    'iddocumento': {'posicionX': '400', 'posicionY': '350', 'fontSize': '28', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Doc: V-12345678'},
-    'sexo': {'posicionX': '400', 'posicionY': '400', 'fontSize': '28', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Sexo: M'},
-    'equipo': {'posicionX': '400', 'posicionY': '450', 'fontSize': '28', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Equipo: Nombre'},
-    'competencia': {'posicionX': '400', 'posicionY': '500', 'fontSize': '28', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Competencia'},
-    'categoria': {'posicionX': '400', 'posicionY': '550', 'fontSize': '28', 'fontFamily': 'Arial', 'fontColor': '#000000', 'valor': 'Cat: Categoria'},
+    'numero': {'posicionX': '400', 'posicionY': '200', 'fontSize': '72', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': '123'},
+    'nombre': {'posicionX': '400', 'posicionY': '300', 'fontSize': '36', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Nombre Apellido'},
+    'iddocumento': {'posicionX': '400', 'posicionY': '350', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Doc: V-12345678'},
+    'sexo': {'posicionX': '400', 'posicionY': '400', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Sexo: M'},
+    'equipo': {'posicionX': '400', 'posicionY': '450', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Equipo: Nombre'},
+    'competencia': {'posicionX': '400', 'posicionY': '500', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Competencia'},
+    'categoria': {'posicionX': '400', 'posicionY': '550', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Cat: Categoria'},
   };
 
   late int _idevento;
