@@ -21,10 +21,15 @@ jobs:
       - run: flutter build web --dart-define=API_URL=${{ secrets.API_URL }} --release
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.6.0
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./build/web/
-          server-dir: ${{ secrets.FTP_WEB_DIR }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -c "
+            open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
+            set ftp:ssl-allow no;
+            set ftp:passive-mode on;
+            set net:max-retries 3;
+            mirror -R --delete --verbose \
+              --exclude .git \
+              ./build/web/ ${{ secrets.FTP_WEB_DIR }};
+            quit
+          "
