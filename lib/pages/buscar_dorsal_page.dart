@@ -4,8 +4,8 @@ import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 
 class BuscarDorsalPage extends StatefulWidget {
-  final int idevento;
-  const BuscarDorsalPage({super.key, required this.idevento});
+  final int? idevento;
+  const BuscarDorsalPage({super.key, this.idevento});
 
   @override
   State<BuscarDorsalPage> createState() => _BuscarDorsalPageState();
@@ -27,11 +27,16 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   }
 
   Future<void> _cargarEvento() async {
+    final id = widget.idevento;
+    if (id == null) {
+      setState(() => _eventoNombre = '');
+      return;
+    }
     try {
-      final evento = await _api.getEvento(widget.idevento);
-      setState(() => _eventoNombre = evento['nombre']?.toString() ?? 'Evento #${widget.idevento}');
+      final evento = await _api.getEvento(id);
+      setState(() => _eventoNombre = evento['nombre']?.toString() ?? 'Evento #$id');
     } catch (e) {
-      _eventoNombre = 'Evento #${widget.idevento}';
+      _eventoNombre = 'Evento #$id';
     }
   }
 
@@ -42,7 +47,9 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     setState(() { _loading = true; _error = null; _resultados = null; _imagenesCache.clear(); });
 
     try {
-      final res = await _api.buscarDorsalEnEvento(widget.idevento, doc);
+      final res = widget.idevento != null
+          ? await _api.buscarDorsalEnEvento(widget.idevento!, doc)
+          : await _api.buscarDorsal(doc);
       final items = res.cast<Map<String, dynamic>>();
       setState(() => _resultados = items);
       for (final item in items) {
@@ -85,7 +92,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(canPop: false, child: Scaffold(
-      appBar: AppBar(title: Text('Consulta tu inscripción - $_eventoNombre'), automaticallyImplyLeading: false),
+      appBar: AppBar(title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : 'Consulta tu inscripción'), automaticallyImplyLeading: false),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -112,6 +119,27 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 ),
               ],
             ),
+            if (widget.idevento == null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Card(
+                  color: Colors.amber.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.amber),
+                        const SizedBox(width: 12),
+                        const Expanded(child: Text('Selecciona un evento para consultar')),
+                        TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/eventos'),
+                          child: const Text('Ver eventos'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             const SizedBox(height: 24),
             if (_loading) const Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator()),
             if (_error != null)
@@ -177,12 +205,6 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 );
               })),
             const SizedBox(height: 24),
-            Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Regresar'),
-              ),
-            ),
           ],
         ),
       ),
