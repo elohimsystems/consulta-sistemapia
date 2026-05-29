@@ -17,12 +17,16 @@ class MyApp extends StatelessWidget {
       title: 'SistemaPIA',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
       routes: {
-        '/': (context) => const EventosListPage(),
+        '/eventos': (context) => const EventosListPage(),
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '');
-        if (uri.pathSegments.length == 1) {
-          final id = int.tryParse(uri.pathSegments[0]);
+        if (uri.path == '/') {
+          return MaterialPageRoute(builder: (_) => const BuscarDorsalPage());
+        }
+        final pathSegments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+        if (pathSegments.length == 1) {
+          final id = int.tryParse(pathSegments[0]);
           if (id != null) {
             return MaterialPageRoute(builder: (_) => BuscarDorsalPage(idevento: id));
           }
