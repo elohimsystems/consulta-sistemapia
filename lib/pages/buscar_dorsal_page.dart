@@ -1,7 +1,5 @@
-import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 
@@ -25,11 +23,6 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
-      html.window.onPopState.listen((_) {
-        html.window.history.pushState(null, '', null);
-      });
-    }
     _cargarEvento();
   }
 
@@ -91,14 +84,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          // Bloquear navegación hacia atrás
-        }
-      },
-      child: Scaffold(
+    return PopScope(canPop: false, child: Scaffold(
       appBar: AppBar(title: Text('Consulta tu inscripción - $_eventoNombre'), automaticallyImplyLeading: false),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
