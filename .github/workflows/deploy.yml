@@ -2,7 +2,8 @@ name: Deploy Web
 
 on:
   push:
-    branches: [main, master]
+    branches: [develop]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -18,20 +19,28 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --dart-define=API_URL=${{ secrets.API_URL }} --release
+      - name: Build
+        env:
+          API_URL: ${{ github.event_name == 'workflow_dispatch' && secrets.API_URL_PROD || secrets.API_URL }}
+        run: flutter build web --dart-define=API_URL=$API_URL --release
 
       - run: cp web/.htaccess build/web/.htaccess
 
       - name: Deploy via FTP
+        env:
+          FTP_USERNAME: ${{ github.event_name == 'workflow_dispatch' && secrets.FTP_USERNAME_PROD || secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ github.event_name == 'workflow_dispatch' && secrets.FTP_PASSWORD_PROD || secrets.FTP_PASSWORD }}
+          FTP_HOST: ${{ github.event_name == 'workflow_dispatch' && secrets.FTP_HOST_PROD || secrets.FTP_HOST }}
+          FTP_WEB_DIR: ${{ github.event_name == 'workflow_dispatch' && secrets.FTP_WEB_DIR_PROD || secrets.FTP_WEB_DIR }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
           lftp -c "
-            open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }};
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
             set ftp:ssl-allow no;
             set ftp:passive-mode on;
             set net:max-retries 3;
             mirror -R --verbose \
               --exclude .git \
-              ./build/web/ ${{ secrets.FTP_WEB_DIR }};
+              ./build/web/ $FTP_WEB_DIR;
             quit
           "
