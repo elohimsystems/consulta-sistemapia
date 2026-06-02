@@ -24,7 +24,7 @@ class _EventosListPageState extends State<EventosListPage> {
     setState(() => _loading = true);
     try {
       final eventos = await _api.getEventosActivos();
-      setState(() { _eventos = filtrados; _loading = false; });
+      setState(() { _eventos = eventos; _loading = false; });
     } catch (e) {
       debugPrint('Error al cargar eventos: $e');
       setState(() => _loading = false);
