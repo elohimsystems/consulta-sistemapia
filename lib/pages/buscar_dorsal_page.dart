@@ -119,27 +119,6 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 ),
               ],
             ),
-            if (widget.idevento == null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  color: Colors.amber.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.amber),
-                        const SizedBox(width: 12),
-                        const Expanded(child: Text('Selecciona un evento para consultar')),
-                        TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/eventos'),
-                          child: const Text('Ver eventos'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             const SizedBox(height: 24),
             if (_loading) const Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator()),
             if (_error != null)
