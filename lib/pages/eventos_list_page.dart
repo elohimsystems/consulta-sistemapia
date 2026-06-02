@@ -24,13 +24,9 @@ class _EventosListPageState extends State<EventosListPage> {
     setState(() => _loading = true);
     try {
       final eventos = await _api.getEventos();
-      final ahora = DateTime.now();
       final filtrados = eventos.where((e) {
-        final fechaStr = (e as Map<String, dynamic>)['fecha'];
         final activo = e['activo'] == true;
-        if (fechaStr == null || !activo) return false;
-        final fecha = DateTime.tryParse(fechaStr.toString());
-        return fecha != null && fecha.isAfter(ahora);
+        return activo;
       }).toList();
       setState(() { _eventos = filtrados; _loading = false; });
     } catch (e) {
