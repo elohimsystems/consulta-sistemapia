@@ -16,6 +16,20 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   List<Map<String, dynamic>> _items = [];
   final Map<int, Uint8List?> _imagenesCache = {};
   bool _loading = true;
+  final _filterController = TextEditingController();
+  String _filter = '';
+
+  List<Map<String, dynamic>> get _filteredItems {
+    if (_filter.isEmpty) return _items;
+    final f = _filter.toLowerCase();
+    return _items.where((item) =>
+      (item['nombre']?.toString().toLowerCase().contains(f) ?? false) ||
+      (item['iddocumento']?.toString().toLowerCase().contains(f) ?? false) ||
+      (item['numero']?.toString().toLowerCase().contains(f) ?? false) ||
+      (item['competencia']?.toString().toLowerCase().contains(f) ?? false) ||
+      (item['categoria']?.toString().toLowerCase().contains(f) ?? false)
+    ).toList();
+  }
 
   @override
   void initState() {
@@ -48,6 +62,12 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   }
 
   @override
+  void dispose() {
+    _filterController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     const _cols = ['Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
     const _imgWidth = 60.0;
@@ -69,6 +89,23 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                       child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 6),
+                          child: TextField(
+                            controller: _filterController,
+                            decoration: InputDecoration(
+                              hintText: 'Filtrar...',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              suffixIcon: _filter.isNotEmpty
+                                  ? IconButton(icon: const Icon(Icons.clear), onPressed: () { _filterController.clear(); setState(() => _filter = ''); })
+                                  : null,
+                            ),
+                            onChanged: (v) => setState(() => _filter = v),
+                          ),
+                        ),
                         Container(
                           color: Colors.grey.shade200,
                           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -81,7 +118,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                             }),
                           ),
                         ),
-                        ..._items.map((item) {
+                        ..._filteredItems.map((item) {
                           final id = int.parse(item['id'].toString());
                           final bytes = _imagenesCache[id];
                           return Container(
