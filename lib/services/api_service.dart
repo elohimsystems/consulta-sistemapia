@@ -11,6 +11,12 @@ class ApiService {
     throw Exception('Error al cargar eventos: ${res.body}');
   }
 
+  Future<List<dynamic>> getEventosActivos() async {
+    final res = await http.get(Uri.parse('$baseUrl/eventos/activos'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al cargar eventos activos: ${res.body}');
+  }
+
   Future<Map<String, dynamic>> getEvento(int id) async {
     final res = await http.get(Uri.parse('$baseUrl/eventos/$id'));
     if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
@@ -83,6 +89,16 @@ class ApiService {
     throw Exception('Error al generar dorsales: ${res.body}');
   }
 
+  Future<Map<String, dynamic>> generarDorsalesPorDocumentos(int idevento, List<String> documentos) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/dorsales/generar/$idevento/por-documentos'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'documentos': documentos}),
+    );
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al generar dorsales por documentos: ${res.body}');
+  }
+
   Future<Map<String, dynamic>> contarDorsales(int idevento) async {
     final res = await http.get(Uri.parse('$baseUrl/dorsales/generar/$idevento'));
     if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
@@ -105,6 +121,12 @@ class ApiService {
     final res = await http.get(Uri.parse('$baseUrl/dorsales/buscar/$idevento/$iddocumento'));
     if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
     throw Exception('No se encontraron dorsales: ${res.body}');
+  }
+
+  Future<List<dynamic>> getDorsalesList(int idevento) async {
+    final res = await http.get(Uri.parse('$baseUrl/dorsales/listar/$idevento'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al listar dorsales: ${res.body}');
   }
 
   String imagenUrl(int id) => '$baseUrl/dorsales/imagen/$id';

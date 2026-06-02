@@ -17,6 +17,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   List<Map<String, dynamic>>? _resultados;
   final Map<int, Uint8List?> _imagenesCache = {};
   bool _loading = false;
+  bool _mostrandoResultados = false;
   String? _error;
   String _eventoNombre = '';
 
@@ -40,6 +41,10 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     }
   }
 
+  void _buscarNuevamente() {
+    setState(() { _mostrandoResultados = false; _resultados = null; _error = null; _imagenesCache.clear(); _controller.clear(); });
+  }
+
   Future<void> _buscar() async {
     final doc = _controller.text.trim();
     if (doc.isEmpty) return;
@@ -51,7 +56,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
           ? await _api.buscarDorsalEnEvento(widget.idevento!, doc)
           : await _api.buscarDorsal(doc);
       final items = res.cast<Map<String, dynamic>>();
-      setState(() => _resultados = items);
+      setState(() { _resultados = items; _mostrandoResultados = true; });
       for (final item in items) {
         _cargarImagen(int.parse(item['id'].toString()));
       }
@@ -92,53 +97,47 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(canPop: false, child: Scaffold(
-      appBar: AppBar(title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : 'Consulta tu inscripción'), automaticallyImplyLeading: false),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : ''), automaticallyImplyLeading: false),
+      body: widget.idevento == null
+          ? Center(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.red.shade300, width: 1.5),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.red.shade50,
+                ),
+                child: const Text('Debe especificar un ID Evento en el URL',
+                    style: TextStyle(fontSize: 16, color: Colors.red)),
+              ),
+            )
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Ingrese su cédula',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _buscar(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _buscar,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
-                  child: const Text('Buscar'),
-                ),
-              ],
-            ),
-            if (widget.idevento == null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  color: Colors.amber.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.info_outline, color: Colors.amber),
-                        const SizedBox(width: 12),
-                        const Expanded(child: Text('Selecciona un evento para consultar')),
-                        TextButton(
-                          onPressed: () => Navigator.pushNamed(context, '/eventos'),
-                          child: const Text('Ver eventos'),
-                        ),
-                      ],
+            if (!_mostrandoResultados)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Ingrese su cédula',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => _buscar(),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _buscar,
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
+                    child: const Text('Buscar'),
+                  ),
+                ],
               ),
             const SizedBox(height: 24),
             if (_loading) const Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator()),
@@ -147,7 +146,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 padding: const EdgeInsets.only(top: 40),
                 child: Text(_error!, style: const TextStyle(fontSize: 16)),
               ),
-            if (_resultados != null)
+            if (_resultados != null && _mostrandoResultados)
               ...(_resultados!.map((item) {
                 final id = int.parse(item['id'].toString());
                 final bytes = _imagenesCache[id];
@@ -204,7 +203,19 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                   ),
                 );
               })),
-            const SizedBox(height: 24),
+            if (_mostrandoResultados)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _buscarNuevamente,
+                    icon: const Icon(Icons.search),
+                    label: const Text('Buscar nuevamente'),
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
