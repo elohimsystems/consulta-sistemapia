@@ -49,9 +49,10 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
 
   @override
   Widget build(BuildContext context) {
-    const _cols = ['', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
-    const _colWidths = [110.0, 160.0, 110.0, 70.0, 140.0, 140.0];
-    const _totalWidth = 730.0;
+    const _cols = ['Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
+    const _colFracts = [0.15, 0.22, 0.18, 0.10, 0.18, 0.17];
+    final tableWidth = MediaQuery.of(context).size.width * 0.80;
+    final colWidths = _colFracts.map((f) => tableWidth * f).toList();
 
     return Scaffold(
       appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
@@ -66,7 +67,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SizedBox(
-                        width: _totalWidth,
+                        width: tableWidth,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -76,7 +77,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                               child: Row(
                                 children: List.generate(_cols.length, (i) {
                                   return SizedBox(
-                                    width: _colWidths[i],
+                                    width: colWidths[i],
                                     child: Text(_cols[i], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                   );
                                 }),
@@ -90,17 +91,17 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 child: Row(
                                   children: [
                                     SizedBox(
-                                      width: _colWidths[0],
+                                      width: colWidths[0],
                                       height: 90,
                                       child: bytes != null
                                           ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
                                           : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                                     ),
-                                    SizedBox(width: _colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
-                                    SizedBox(width: _colWidths[2], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
-                                    SizedBox(width: _colWidths[3], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
-                                    SizedBox(width: _colWidths[4], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
-                                    SizedBox(width: _colWidths[5], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                    SizedBox(width: colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: colWidths[2], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: colWidths[3], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: colWidths[4], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                    SizedBox(width: colWidths[5], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
                                   ],
                                 ),
                               );
