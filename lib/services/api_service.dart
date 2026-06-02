@@ -11,6 +11,12 @@ class ApiService {
     throw Exception('Error al cargar eventos: ${res.body}');
   }
 
+  Future<List<dynamic>> getEventosActivos() async {
+    final res = await http.get(Uri.parse('$baseUrl/eventos/activos'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al cargar eventos activos: ${res.body}');
+  }
+
   Future<Map<String, dynamic>> getEvento(int id) async {
     final res = await http.get(Uri.parse('$baseUrl/eventos/$id'));
     if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
