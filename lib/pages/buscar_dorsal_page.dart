@@ -212,7 +212,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                     onPressed: _buscarNuevamente,
                     icon: const Icon(Icons.search),
                     label: const Text('Buscar nuevamente'),
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), backgroundColor: Colors.blue, foregroundColor: Colors.white),
                   ),
                 ),
               ),
