@@ -51,6 +51,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   Widget build(BuildContext context) {
     const _cols = ['', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
     const _colWidths = [110.0, 160.0, 110.0, 70.0, 140.0, 140.0];
+    const _totalWidth = 730.0;
 
     return Scaffold(
       appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
@@ -65,7 +66,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SizedBox(
-                        width: _colWidths.fold(0.0, (a, b) => a + b),
+                        width: _totalWidth,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
