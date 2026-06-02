@@ -34,6 +34,8 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
   bool _loading = false;
   bool _deleting = false;
   bool _previewLoading = false;
+  bool _documentosLoading = false;
+  final _documentosController = TextEditingController();
   List<dynamic> _bases = [];
   List<dynamic> _competencias = [];
   List<dynamic> _categorias = [];
@@ -243,6 +245,23 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
     setState(() => _loading = false);
   }
 
+  Future<void> _generarPorDocumentos() async {
+    final text = _documentosController.text.trim();
+    if (text.isEmpty) return;
+    final docs = text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    if (docs.isEmpty) return;
+    setState(() => _documentosLoading = true);
+    try {
+      final res = await _api.generarDorsalesPorDocumentos(_idevento, docs);
+      setState(() => _dorsalesExistentes += res['total'] ?? 0);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Se generaron ${res['total']} dorsales')));
+    } catch (e) {
+      debugPrint('Error al generar dorsales por documentos: $e');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+    setState(() => _documentosLoading = false);
+  }
+
   Future<void> _eliminarDorsales() async {
     setState(() => _deleting = true);
     try {
@@ -258,6 +277,7 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
 
   @override
   void dispose() {
+    _documentosController.dispose();
     for (final c in _camposConfig.values) {
       for (final tc in c.values) tc.dispose();
     }
@@ -476,6 +496,35 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
               ),
             ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            const Text('Generar dorsales por cédula', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _documentosController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cédulas separadas por coma',
+                      border: OutlineInputBorder(),
+                      hintText: 'V-12345678, V-87654321',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _documentosLoading ? null : _generarPorDocumentos,
+                  icon: _documentosLoading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.person_add),
+                  label: Text(_documentosLoading ? 'Generando...' : 'Generar'),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             if (_dorsalesExistentes > 0) ...[
               const SizedBox(height: 12),
               Card(

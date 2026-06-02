@@ -89,6 +89,16 @@ class ApiService {
     throw Exception('Error al generar dorsales: ${res.body}');
   }
 
+  Future<Map<String, dynamic>> generarDorsalesPorDocumentos(int idevento, List<String> documentos) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/dorsales/generar/$idevento/por-documentos'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'documentos': documentos}),
+    );
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al generar dorsales por documentos: ${res.body}');
+  }
+
   Future<Map<String, dynamic>> contarDorsales(int idevento) async {
     final res = await http.get(Uri.parse('$baseUrl/dorsales/generar/$idevento'));
     if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
