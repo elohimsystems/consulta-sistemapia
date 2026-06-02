@@ -18,6 +18,8 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   bool _loading = true;
   final _filterController = TextEditingController();
   String _filter = '';
+  int _currentPage = 0;
+  static const _pageSize = 20;
 
   List<Map<String, dynamic>> get _filteredItems {
     if (_filter.isEmpty) return _items;
@@ -29,6 +31,17 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
       (item['competencia']?.toString().toLowerCase().contains(f) ?? false) ||
       (item['categoria']?.toString().toLowerCase().contains(f) ?? false)
     ).toList();
+  }
+
+  int get _pageCount => (_filteredItems.length / _pageSize).ceil().clamp(1, 9999);
+
+  List<Map<String, dynamic>> get _paginatedItems {
+    final start = _currentPage * _pageSize;
+    return _filteredItems.skip(start).take(_pageSize).toList();
+  }
+
+  void _goToPage(int page) {
+    setState(() => _currentPage = page.clamp(0, _pageCount - 1));
   }
 
   @override
@@ -103,7 +116,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   ? IconButton(icon: const Icon(Icons.clear), onPressed: () { _filterController.clear(); setState(() => _filter = ''); })
                                   : null,
                             ),
-                            onChanged: (v) => setState(() => _filter = v),
+                            onChanged: (v) { setState(() { _filter = v; _currentPage = 0; }); },
                           ),
                         ),
                         Container(
@@ -118,7 +131,9 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                             }),
                           ),
                         ),
-                        ..._filteredItems.map((item) {
+                        if (_paginatedItems.isEmpty)
+                          const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Sin resultados'))),
+                        ..._paginatedItems.map((item) {
                           final id = int.parse(item['id'].toString());
                           final bytes = _imagenesCache[id];
                           return Container(
@@ -146,6 +161,34 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                             ),
                           );
                         }),
+                        if (_pageCount > 1)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_left),
+                                  onPressed: _currentPage > 0 ? () => _goToPage(_currentPage - 1) : null,
+                                ),
+                                ...List.generate(_pageCount, (i) {
+                                  final isCurrent = i == _currentPage;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    child: ChoiceChip(
+                                      label: Text('${i + 1}', style: const TextStyle(fontSize: 12)),
+                                      selected: isCurrent,
+                                      onSelected: (_) => _goToPage(i),
+                                    ),
+                                  );
+                                }),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right),
+                                  onPressed: _currentPage < _pageCount - 1 ? () => _goToPage(_currentPage + 1) : null,
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ));
                     if (tableWidth <= constraints.maxWidth) {
