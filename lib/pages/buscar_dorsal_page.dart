@@ -94,7 +94,19 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     return PopScope(canPop: false, child: Scaffold(
       appBar: AppBar(title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : ''), automaticallyImplyLeading: false),
       body: widget.idevento == null
-          ? const Center(child: Text('Debe especificar un ID Evento en el URL', style: TextStyle(fontSize: 16)))
+          ? Center(
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.red.shade300, width: 1.5),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.red.shade50,
+                ),
+                child: const Text('Debe especificar un ID Evento en el URL',
+                    style: TextStyle(fontSize: 16, color: Colors.red)),
+              ),
+            )
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
