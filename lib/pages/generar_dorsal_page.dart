@@ -253,7 +253,7 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
     setState(() => _documentosLoading = true);
     try {
       final res = await _api.generarDorsalesPorDocumentos(_idevento, docs);
-      setState(() => _dorsalesExistentes += res['total'] ?? 0);
+      setState(() => _dorsalesExistentes += (res['total'] as num?)?.toInt() ?? 0);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Se generaron ${res['total']} dorsales')));
     } catch (e) {
       debugPrint('Error al generar dorsales por documentos: $e');
