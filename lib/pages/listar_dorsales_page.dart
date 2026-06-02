@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
 
 class ListarDorsalesPage extends StatefulWidget {
@@ -48,19 +47,11 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     }
   }
 
-  Future<void> _compartir(Uint8List bytes, String nombre) async {
-    try {
-      await Share.shareXFiles(
-        [XFile.fromData(bytes, mimeType: 'image/jpeg', name: 'dorsal.jpg')],
-        text: 'Mi dorsal - $nombre',
-      );
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al compartir: $e')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    const _cols = ['', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
+    const _colWidths = [110.0, 160.0, 110.0, 70.0, 140.0, 140.0];
+
     return Scaffold(
       appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
       body: _loading
@@ -69,57 +60,54 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
               ? const Center(child: Text('No hay dorsales generados'))
               : RefreshIndicator(
                   onRefresh: _cargar,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: _items.length,
-                    itemBuilder: (ctx, i) {
-                      final item = _items[i];
-                      final id = int.parse(item['id'].toString());
-                      final bytes = _imagenesCache[id];
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 100,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: bytes != null
-                                      ? Image.memory(bytes, fit: BoxFit.fitWidth)
-                                      : const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-                                ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: _colWidths.fold(0.0, (a, b) => a + b),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              color: Colors.grey.shade200,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Row(
+                                children: List.generate(_cols.length, (i) {
+                                  return SizedBox(
+                                    width: _colWidths[i],
+                                    child: Text(_cols[i], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  );
+                                }),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 8,
-                                  runSpacing: 2,
-                                  alignment: WrapAlignment.start,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
+                            ),
+                            ..._items.map((item) {
+                              final id = int.parse(item['id'].toString());
+                              final bytes = _imagenesCache[id];
+                              return Container(
+                                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                                child: Row(
                                   children: [
-                                    Text(item['nombre'] ?? 'Sin nombre', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    if (item['iddocumento'] != null)
-                                      Text('Ced: ${item['iddocumento']}', style: const TextStyle(fontSize: 12)),
-                                    if (item['numero'] != null)
-                                      Text('Nro: ${item['numero']}', style: const TextStyle(fontSize: 12)),
-                                    if ((item['competencia'] ?? '').isNotEmpty)
-                                      Text('${item['competencia']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                    if ((item['categoria'] ?? '').isNotEmpty)
-                                      Text('${item['categoria']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                    SizedBox(
+                                      width: _colWidths[0],
+                                      height: 90,
+                                      child: bytes != null
+                                          ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
+                                          : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    ),
+                                    SizedBox(width: _colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: _colWidths[2], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: _colWidths[3], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
+                                    SizedBox(width: _colWidths[4], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                    SizedBox(width: _colWidths[5], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
                                   ],
                                 ),
-                              ),
-                              if (bytes != null)
-                                IconButton(
-                                  icon: const Icon(Icons.share),
-                                  onPressed: () => _compartir(bytes, item['nombre'] ?? 'Participante'),
-                                ),
-                            ],
-                          ),
+                              );
+                            }),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
     );
