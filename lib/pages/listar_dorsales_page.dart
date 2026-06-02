@@ -50,9 +50,11 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   @override
   Widget build(BuildContext context) {
     const _cols = ['Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
-    const _colFracts = [0.15, 0.22, 0.18, 0.10, 0.18, 0.17];
+    const _imgWidth = 60.0;
+    const _colFracts = [0.26, 0.22, 0.12, 0.21, 0.19];
     final tableWidth = MediaQuery.of(context).size.width * 0.80;
-    final colWidths = _colFracts.map((f) => tableWidth * f).toList();
+    final restWidth = tableWidth - _imgWidth;
+    final colWidths = [_imgWidth, ..._colFracts.map((f) => restWidth * f)];
 
     return Scaffold(
       appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
@@ -66,9 +68,10 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                     scrollDirection: Axis.vertical,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: tableWidth,
-                        child: Column(
+                      child: Center(
+                        child: SizedBox(
+                          width: tableWidth,
+                          child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Container(
@@ -109,6 +112,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                           ],
                         ),
                       ),
+                    ),
                     ),
                   ),
                 ),
