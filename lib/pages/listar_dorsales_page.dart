@@ -83,25 +83,26 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                             children: [
                               SizedBox(
                                 width: 100,
-                                height: 100,
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: bytes != null
-                                      ? Image.memory(bytes, fit: BoxFit.cover)
-                                      : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                      ? Image.memory(bytes, fit: BoxFit.fitWidth)
+                                      : const SizedBox(height: 120, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 2,
+                                  alignment: WrapAlignment.start,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
-                                    Text(item['nombre'] ?? 'Sin nombre', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                    const SizedBox(height: 4),
+                                    Text(item['nombre'] ?? 'Sin nombre', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                     if (item['iddocumento'] != null)
-                                      Text('Cédula: ${item['iddocumento']}', style: const TextStyle(fontSize: 13)),
+                                      Text('Ced: ${item['iddocumento']}', style: const TextStyle(fontSize: 12)),
                                     if (item['numero'] != null)
-                                      Text('Nº: ${item['numero']}', style: const TextStyle(fontSize: 13)),
+                                      Text('Nro: ${item['numero']}', style: const TextStyle(fontSize: 12)),
                                     if ((item['competencia'] ?? '').isNotEmpty)
                                       Text('${item['competencia']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                     if ((item['categoria'] ?? '').isNotEmpty)
