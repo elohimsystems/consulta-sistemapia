@@ -93,13 +93,16 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
                                 child: Row(
                                   children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(5),
-                                      child: SizedBox(
-                                        height: 90,
-                                        child: bytes != null
-                                            ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
-                                            : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    SizedBox(
+                                      width: colWidths[0],
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(5),
+                                        child: SizedBox(
+                                          height: 90,
+                                          child: bytes != null
+                                              ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
+                                              : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                        ),
                                       ),
                                     ),
                                     SizedBox(width: colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
