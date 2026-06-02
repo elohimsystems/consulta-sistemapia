@@ -120,6 +120,11 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
               ],
             ),
             const SizedBox(height: 24),
+            if (widget.idevento == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: Text('Debe especificar un ID Evento en el URL', style: TextStyle(fontSize: 16)),
+              ),
             if (_loading) const Padding(padding: EdgeInsets.only(top: 40), child: CircularProgressIndicator()),
             if (_error != null)
               Padding(
