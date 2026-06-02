@@ -71,7 +71,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                       children: [
                         Container(
                           color: Colors.grey.shade200,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
                             children: List.generate(_cols.length, (i) {
                               return SizedBox(
@@ -93,7 +93,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(5),
                                     child: SizedBox(
-                                      height: 90,
+                                      height: 50,
                                       child: bytes != null
                                           ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
                                           : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
