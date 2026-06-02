@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
+import 'listar_dorsales_page.dart';
 
 class GenerarDorsalPage extends StatefulWidget {
   final Map<String, dynamic> evento;
@@ -494,6 +495,20 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
                     : const Icon(Icons.play_arrow),
                 label: Text(_loading ? 'Generando...' : 'Generar Dorsales'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ListarDorsalesPage(
+                    idevento: _idevento, eventoNombre: widget.evento['nombre']?.toString() ?? '',
+                  )));
+                },
+                icon: const Icon(Icons.list),
+                label: const Text('Ver lista de dorsales'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
               ),
             ),
             const SizedBox(height: 16),

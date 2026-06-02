@@ -123,6 +123,12 @@ class ApiService {
     throw Exception('No se encontraron dorsales: ${res.body}');
   }
 
+  Future<List<dynamic>> getDorsalesList(int idevento) async {
+    final res = await http.get(Uri.parse('$baseUrl/dorsales/listar/$idevento'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al listar dorsales: ${res.body}');
+  }
+
   String imagenUrl(int id) => '$baseUrl/dorsales/imagen/$id';
 
   String baseImagenUrl(int id) => '$baseUrl/dorsales/base-imagen/$id/imagen';
