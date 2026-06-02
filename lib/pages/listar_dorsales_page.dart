@@ -50,7 +50,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   @override
   Widget build(BuildContext context) {
     const _cols = ['Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
-    const _imgWidth = 60.0;
+    const _imgWidth = 70.0;
     const _colFracts = [0.26, 0.22, 0.12, 0.21, 0.19];
     final tableWidth = MediaQuery.of(context).size.width * 0.80;
     final restWidth = tableWidth - _imgWidth;
@@ -93,12 +93,15 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
                                 child: Row(
                                   children: [
-                                    SizedBox(
-                                      width: colWidths[0],
-                                      height: 90,
-                                      child: bytes != null
-                                          ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
-                                          : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    Padding(
+                                      padding: const EdgeInsets.all(5),
+                                      child: SizedBox(
+                                        width: colWidths[0],
+                                        height: 90,
+                                        child: bytes != null
+                                            ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
+                                            : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                      ),
                                     ),
                                     SizedBox(width: colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
                                     SizedBox(width: colWidths[2], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
