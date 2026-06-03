@@ -129,6 +129,25 @@ class ApiService {
     throw Exception('Error al listar dorsales: ${res.body}');
   }
 
+  Future<Map<String, dynamic>> enviarEmailDorsales({
+    required List<int> ids,
+    required String subject,
+    required String message,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/dorsales/enviar-email'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'ids': ids, 'subject': subject, 'message': message}),
+    );
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al enviar email: ${res.body}');
+  }
+
+  Future<void> desmarcarEnviadoDorsal(int id) async {
+    final res = await http.patch(Uri.parse('$baseUrl/dorsales/$id/desmarcar-enviado'));
+    if (res.statusCode != 200) throw Exception('Error al desmarcar: ${res.body}');
+  }
+
   String imagenUrl(int id) => '$baseUrl/dorsales/imagen/$id';
 
   String baseImagenUrl(int id) => '$baseUrl/dorsales/base-imagen/$id/imagen';

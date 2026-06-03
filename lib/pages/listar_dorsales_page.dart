@@ -20,6 +20,8 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   String _filter = '';
   int _currentPage = 0;
   static const _pageSize = 20;
+  final Set<int> _selectedIds = {};
+  bool _sendingEmail = false;
 
   List<Map<String, dynamic>> get _filteredItems {
     if (_filter.isEmpty) return _items;
@@ -40,8 +42,81 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     return _filteredItems.skip(start).take(_pageSize).toList();
   }
 
+  void _toggleSel(int id) {
+    setState(() { _selectedIds.contains(id) ? _selectedIds.remove(id) : _selectedIds.add(id); });
+  }
+
+  void _selectAll() {
+    setState(() { _selectedIds.addAll(_paginatedItems.map((e) => int.parse(e['id'].toString()))); });
+  }
+
+  void _clearSel() {
+    setState(() => _selectedIds.clear());
+  }
+
   void _goToPage(int page) {
     setState(() => _currentPage = page.clamp(0, _pageCount - 1));
+  }
+
+  Future<void> _desmarcarEnviado(int id) async {
+    try {
+      await _api.desmarcarEnviadoDorsal(id);
+      setState(() {
+        final idx = _items.indexWhere((it) => int.parse(it['id'].toString()) == id);
+        if (idx >= 0) _items[idx]['enviado'] = false;
+      });
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> _enviarEmail() async {
+    final ids = _selectedIds.toList();
+    final yaEnviados = ids.where((id) => _items.any((it) => int.parse(it['id'].toString()) == id && it['enviado'] == true)).length;
+    final subjectCtl = TextEditingController();
+    final msgCtl = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enviar dorsal por correo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${ids.length} seleccionado(s)'),
+            if (yaEnviados > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text('$yaEnviados ya fueron enviados antes y serán omitidos', style: const TextStyle(color: Colors.orange, fontSize: 13))),
+            const SizedBox(height: 12),
+            TextField(controller: subjectCtl, decoration: const InputDecoration(labelText: 'Asunto', border: OutlineInputBorder()), autofocus: true),
+            const SizedBox(height: 12),
+            TextField(controller: msgCtl, decoration: const InputDecoration(labelText: 'Mensaje', border: OutlineInputBorder()), maxLines: 4),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
+        ],
+      ),
+    );
+    if (result != true || subjectCtl.text.trim().isEmpty) return;
+    setState(() => _sendingEmail = true);
+    try {
+      final res = await _api.enviarEmailDorsales(
+        ids: ids,
+        subject: subjectCtl.text.trim(),
+        message: msgCtl.text.trim(),
+      );
+      if (mounted) {
+        final fallidos = res['fallidos'] as List? ?? [];
+        final omitidos = fallidos.where((f) => (f['error'] as String?)?.contains('ya fue enviado') == true).length;
+        final realFallidos = fallidos.length - omitidos;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Enviados: ${res['enviados']}. Omitidos: $omitidos. Fallidos: $realFallidos.')));
+      }
+      _cargar();
+      _clearSel();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _sendingEmail = false);
+    }
   }
 
   @override
@@ -55,6 +130,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     try {
       final res = await _api.getDorsalesList(widget.idevento);
       final items = res.cast<Map<String, dynamic>>();
+      items.sort((a, b) => ((a['numero'] as num?)?.toInt() ?? 0).compareTo((b['numero'] as num?)?.toInt() ?? 0));
       setState(() { _items = items; _loading = false; });
       for (final item in items) {
         _cargarImagen(int.parse(item['id'].toString()));
@@ -82,12 +158,14 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
 
   @override
   Widget build(BuildContext context) {
-    const _cols = ['Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría'];
+    const _cols = ['', 'Dorsal', 'Nombre', 'Cédula', 'Nro', 'Competencia', 'Categoría', 'Enviado'];
     const _imgWidth = 60.0;
-    const _colFracts = [0.26, 0.22, 0.12, 0.21, 0.19];
+    const _selWidth = 36.0;
+    const _envWidth = 50.0;
+    const _colFracts = [0.24, 0.20, 0.10, 0.19, 0.17];
     final tableWidth = MediaQuery.of(context).size.width * 0.80;
-    final restWidth = tableWidth - _imgWidth;
-    final colWidths = [_imgWidth, ..._colFracts.map((f) => restWidth * f)];
+    final restWidth = tableWidth - _imgWidth - _selWidth - _envWidth;
+    final colWidths = [_selWidth, _imgWidth, ..._colFracts.map((f) => restWidth * f), _envWidth];
 
     return Scaffold(
       appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
@@ -119,16 +197,51 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                             onChanged: (v) { setState(() { _filter = v; _currentPage = 0; }); },
                           ),
                         ),
+                        if (_selectedIds.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Text('${_selectedIds.length} seleccionado(s)', style: const TextStyle(fontSize: 13)),
+                                const Spacer(),
+                                TextButton.icon(
+                                  icon: const Icon(Icons.deselect, size: 18),
+                                  label: const Text('Quitar selección', style: TextStyle(fontSize: 12)),
+                                  onPressed: _clearSel,
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  icon: _sendingEmail
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                      : const Icon(Icons.email, size: 18),
+                                  label: Text(_sendingEmail ? 'Enviando...' : 'Enviar por correo', style: const TextStyle(fontSize: 12)),
+                                  onPressed: (_sendingEmail || _selectedIds.isEmpty) ? null : _enviarEmail,
+                                ),
+                              ],
+                            ),
+                          ),
                         Container(
                           color: Colors.grey.shade200,
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
-                            children: List.generate(_cols.length, (i) {
-                              return SizedBox(
-                                width: colWidths[i],
-                                child: Text(_cols[i], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              );
-                            }),
+                            children: [
+                              SizedBox(
+                                width: colWidths[0],
+                                child: Checkbox(
+                                  value: _paginatedItems.isNotEmpty && _selectedIds.containsAll(_paginatedItems.map((e) => int.parse(e['id'].toString()))),
+                                  onChanged: (_) {
+                                    final allSel = _paginatedItems.every((e) => _selectedIds.contains(int.parse(e['id'].toString())));
+                                    allSel ? _clearSel() : _selectAll();
+                                  },
+                                ),
+                              ),
+                              ...List.generate(_cols.length - 1, (i) {
+                                return SizedBox(
+                                  width: colWidths[i + 1],
+                                  child: Text(_cols[i + 1], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                         if (_paginatedItems.isEmpty)
@@ -136,12 +249,21 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                         ..._paginatedItems.map((item) {
                           final id = int.parse(item['id'].toString());
                           final bytes = _imagenesCache[id];
+                          final sel = _selectedIds.contains(id);
+                          final enviado = item['enviado'] == true;
                           return Container(
-                            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade300))),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+                              color: sel ? Colors.blue.shade50 : null,
+                            ),
                             child: Row(
                               children: [
                                 SizedBox(
                                   width: colWidths[0],
+                                  child: Checkbox(value: sel, onChanged: (_) => _toggleSel(id)),
+                                ),
+                                SizedBox(
+                                  width: colWidths[1],
                                   child: Padding(
                                     padding: const EdgeInsets.all(5),
                                     child: SizedBox(
@@ -152,11 +274,17 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: colWidths[1], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(width: colWidths[2], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(width: colWidths[3], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(width: colWidths[4], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
-                                SizedBox(width: colWidths[5], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(width: colWidths[2], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
+                                SizedBox(width: colWidths[3], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
+                                SizedBox(width: colWidths[4], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
+                                SizedBox(width: colWidths[5], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(width: colWidths[6], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(
+                                  width: colWidths[7],
+                                  child: enviado
+                                      ? Checkbox(value: true, onChanged: (_) => _desmarcarEnviado(id))
+                                      : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 18),
+                                ),
                               ],
                             ),
                           );

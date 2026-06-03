@@ -25,6 +25,18 @@ jobs:
 
       - run: cp web/.htaccess build/web/.htaccess
 
+      - name: Test FTP connection
+        env:
+          FTP_USERNAME: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && secrets.FTP_USERNAME_PROD || secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && secrets.FTP_PASSWORD_PROD || secrets.FTP_PASSWORD }}
+          FTP_HOST: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && secrets.FTP_HOST_PROD || secrets.FTP_HOST }}
+        run: |
+          echo "Resolviendo host..."
+          nslookup $FTP_HOST || dig $FTP_HOST || host $FTP_HOST
+          echo "Probando conexión puerto 21..."
+          timeout 10 nc -vz $FTP_HOST 21 || echo "nc falló"
+          echo "DNS y conectividad listos"
+
       - name: Deploy via FTP
         env:
           IS_PROD: ${{ github.ref_name == 'main' || github.ref_name == 'master' }}
@@ -35,11 +47,22 @@ jobs:
         run: |
           echo "Desplegando a $([ $IS_PROD = true ] && echo 'PRODUCCIÓN' || echo 'DESARROLLO')..."
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -d -c "
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
+            set ftp:ssl-allow no;
+            set ftp:passive-mode on;
+            set net:max-retries 2;
+            set net:timeout 30;
+            ls;
+            quit
+          "
+          echo "--- Conexión OK, iniciando mirror ---"
           lftp -c "
             open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
             set ftp:ssl-allow no;
             set ftp:passive-mode on;
-            set net:max-retries 3;
+            set net:max-retries 2;
+            set net:timeout 30;
             mirror -R --verbose \
               --exclude .git \
               ./build/web/ $FTP_WEB_DIR;
