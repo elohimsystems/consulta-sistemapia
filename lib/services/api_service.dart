@@ -143,6 +143,26 @@ class ApiService {
     throw Exception('Error al enviar email: ${res.body}');
   }
 
+  Future<Map<String, dynamic>> enviarTodosDorsales({
+    required int idevento,
+    required String subject,
+    required String message,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/dorsales/enviar/$idevento'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'subject': subject, 'message': message}),
+    );
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al enviar todos: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> getEmailTaskStatus(String taskId) async {
+    final res = await http.get(Uri.parse('$baseUrl/dorsales/email-task/$taskId'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al obtener estado: ${res.body}');
+  }
+
   Future<void> desmarcarEnviadoDorsal(int id) async {
     final res = await http.patch(Uri.parse('$baseUrl/dorsales/$id/desmarcar-enviado'));
     if (res.statusCode != 200) throw Exception('Error al desmarcar: ${res.body}');
@@ -165,6 +185,18 @@ class ApiService {
     final res = await http.get(Uri.parse('$baseUrl/dorsales/imagen/$id'));
     if (res.statusCode == 200) return res.bodyBytes;
     throw Exception('Error al cargar imagen: ${res.statusCode}');
+  }
+
+  Future<Map<String, dynamic>> getConfig() async {
+    final res = await http.get(Uri.parse('$baseUrl/config'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al obtener config: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> getVersion() async {
+    final res = await http.get(Uri.parse('$baseUrl/version'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al obtener versión: ${res.body}');
   }
 
   Future<Uint8List> getPreview(int idbaseimagen, Map<String, dynamic> config) async {
