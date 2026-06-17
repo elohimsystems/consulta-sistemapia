@@ -484,17 +484,21 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   icon: const Icon(Icons.chevron_left),
                                   onPressed: _currentPage > 0 ? () => _goToPage(_currentPage - 1) : null,
                                 ),
-                                ...List.generate(_pageCount, (i) {
-                                  final isCurrent = i == _currentPage;
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                                    child: ChoiceChip(
-                                      label: Text('${i + 1}', style: const TextStyle(fontSize: 12)),
-                                      selected: isCurrent,
-                                      onSelected: (_) => _goToPage(i),
-                                    ),
-                                  );
-                                }),
+                                const SizedBox(width: 8),
+                                Text('Pág. ${_currentPage + 1}', style: const TextStyle(fontSize: 14)),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 90,
+                                  height: 36,
+                                  child: DropdownButton<int>(
+                                    value: _currentPage,
+                                    isDense: true,
+                                    underline: const SizedBox(),
+                                    items: List.generate(_pageCount, (i) => DropdownMenuItem(value: i, child: Text('${i + 1}', style: const TextStyle(fontSize: 13)))),
+                                    onChanged: (v) { if (v != null) _goToPage(v); },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
                                 IconButton(
                                   icon: const Icon(Icons.chevron_right),
                                   onPressed: _currentPage < _pageCount - 1 ? () => _goToPage(_currentPage + 1) : null,
