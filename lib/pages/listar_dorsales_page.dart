@@ -103,12 +103,12 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     setState(() => _currentPage = page.clamp(0, _pageCount - 1));
   }
 
-  Future<void> _desmarcarEnviado(int id) async {
+  Future<void> _marcarPendiente(int id) async {
     try {
-      await _api.desmarcarEnviadoDorsal(id);
+      await _api.marcarPendienteDorsal(id);
       setState(() {
         final idx = _items.indexWhere((it) => int.parse(it['id'].toString()) == id);
-        if (idx >= 0) _items[idx]['enviado'] = false;
+        if (idx >= 0) _items[idx]['enviado'] = null;
       });
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -464,11 +464,14 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 SizedBox(width: colWidths[7], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
                                 SizedBox(
                                   width: colWidths[8],
-                                  child: enviado == true
-                                      ? Checkbox(value: true, onChanged: (_) => _desmarcarEnviado(id))
-                                      : enviado == false
-                                          ? const Icon(Icons.cancel, color: Colors.red, size: 18)
-                                          : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 18),
+                                  child: GestureDetector(
+                                    onTap: () => _marcarPendiente(id),
+                                    child: enviado == true
+                                        ? const Icon(Icons.check_circle, color: Colors.green, size: 22)
+                                        : enviado == false
+                                            ? const Icon(Icons.cancel, color: Colors.red, size: 22)
+                                            : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 22),
+                                  ),
                                 ),
                               ],
                             ),

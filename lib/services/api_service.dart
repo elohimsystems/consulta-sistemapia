@@ -163,9 +163,9 @@ class ApiService {
     throw Exception('Error al obtener estado: ${res.body}');
   }
 
-  Future<void> desmarcarEnviadoDorsal(int id) async {
+  Future<void> marcarPendienteDorsal(int id) async {
     final res = await http.patch(Uri.parse('$baseUrl/dorsales/$id/desmarcar-enviado'));
-    if (res.statusCode != 200) throw Exception('Error al desmarcar: ${res.body}');
+    if (res.statusCode != 200) throw Exception('Error al marcar pendiente: ${res.body}');
   }
 
   String imagenUrl(int id) => '$baseUrl/dorsales/imagen/$id';
