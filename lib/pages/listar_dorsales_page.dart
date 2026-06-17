@@ -51,8 +51,9 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
           return _sortAsc ? na.compareTo(nb) : nb.compareTo(na);
         }
         if (_sortCol == 8) {
-          final ba = a['enviado'] == true ? 1 : 0;
-          final bb = b['enviado'] == true ? 1 : 0;
+          int orden(v) => v == true ? 2 : v == false ? 1 : 0;
+          final ba = orden(a['enviado']);
+          final bb = orden(b['enviado']);
           return _sortAsc ? ba.compareTo(bb) : bb.compareTo(ba);
         }
         if (_sortCol == 4) {
@@ -122,10 +123,20 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
         if (status['status'] == 'completed') {
           final enviados = status['enviados'] ?? 0;
           final fallidos = (status['fallidos'] as List?) ?? [];
-          final omitidos = fallidos.where((f) => (f['error'] as String?)?.contains('ya fue enviado') == true).length;
+          final omitidos = fallidos.where(
+            (f) => (f['error'] as String?)?.contains('ya fue enviado') == true,
+          ).length;
           final realFallidos = fallidos.length - omitidos;
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Enviados: $enviados. Omitidos: $omitidos. Fallidos: $realFallidos.')));
+            await _cargar();
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                realFallidos > 0
+                    ? 'Enviados: $enviados. Fallidos: $realFallidos. Omitidos: $omitidos.'
+                    : 'Enviados: $enviados. Omitidos: $omitidos.',
+              ),
+              duration: Duration(seconds: 4),
+            ));
           }
           break;
         }
@@ -414,7 +425,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                           final id = int.parse(item['id'].toString());
                           final bytes = _imagenesCache[id];
                           final sel = _selectedIds.contains(id);
-                          final enviado = item['enviado'] == true;
+                          final enviado = item['enviado'];
                           return Container(
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
@@ -453,9 +464,11 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 SizedBox(width: colWidths[7], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
                                 SizedBox(
                                   width: colWidths[8],
-                                  child: enviado
+                                  child: enviado == true
                                       ? Checkbox(value: true, onChanged: (_) => _desmarcarEnviado(id))
-                                      : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 18),
+                                      : enviado == false
+                                          ? const Icon(Icons.cancel, color: Colors.red, size: 18)
+                                          : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 18),
                                 ),
                               ],
                             ),
