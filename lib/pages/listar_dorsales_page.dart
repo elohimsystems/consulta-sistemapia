@@ -487,6 +487,11 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 const SizedBox(width: 8),
                                 Text('Pág. ${_currentPage + 1}', style: const TextStyle(fontSize: 14)),
                                 const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right),
+                                  onPressed: _currentPage < _pageCount - 1 ? () => _goToPage(_currentPage + 1) : null,
+                                ),
+                                const SizedBox(width: 8),
                                 SizedBox(
                                   width: 90,
                                   height: 36,
@@ -497,11 +502,6 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                     items: List.generate(_pageCount, (i) => DropdownMenuItem(value: i, child: Text('${i + 1}', style: const TextStyle(fontSize: 13)))),
                                     onChanged: (v) { if (v != null) _goToPage(v); },
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.chevron_right),
-                                  onPressed: _currentPage < _pageCount - 1 ? () => _goToPage(_currentPage + 1) : null,
                                 ),
                               ],
                             ),
