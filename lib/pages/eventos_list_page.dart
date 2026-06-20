@@ -81,7 +81,6 @@ class _EventosListPageState extends State<EventosListPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                                 onPressed: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (_) => NotificarPage(
