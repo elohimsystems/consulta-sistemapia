@@ -37,7 +37,8 @@ class _NotificarPageState extends State<NotificarPage> {
         final numero = (item['numero']?.toString() ?? '').toLowerCase();
         final competencia = (item['competencia'] is Map ? (item['competencia'] as Map)['descripcion']?.toString() ?? '' : '').toLowerCase();
         final categoria = (item['categoria'] is Map ? (item['categoria'] as Map)['descripcion']?.toString() ?? '' : '').toLowerCase();
-        return nombre.contains(f) || doc.contains(f) || email.contains(f) || numero.contains(f) || competencia.contains(f) || categoria.contains(f);
+        final estatus = (item['estatus']?.toString() ?? '').toLowerCase();
+        return nombre.contains(f) || doc.contains(f) || email.contains(f) || numero.contains(f) || competencia.contains(f) || categoria.contains(f) || estatus.contains(f);
       }).toList();
     }
     if (_sortCol >= 0) {
@@ -61,6 +62,8 @@ class _NotificarPageState extends State<NotificarPage> {
             return compareStr(a['competencia'] is Map ? (a['competencia'] as Map)['descripcion']?.toString() ?? '' : '', b['competencia'] is Map ? (b['competencia'] as Map)['descripcion']?.toString() ?? '' : '');
           case 5:
             return compareStr(a['categoria'] is Map ? (a['categoria'] as Map)['descripcion']?.toString() ?? '' : '', b['categoria'] is Map ? (b['categoria'] as Map)['descripcion']?.toString() ?? '' : '');
+          case 6:
+            return compareStr(a['estatus']?.toString() ?? '', b['estatus']?.toString() ?? '');
           default:
             return 0;
         }
@@ -352,11 +355,15 @@ class _NotificarPageState extends State<NotificarPage> {
     return cat is Map ? (cat['descripcion']?.toString() ?? '') : '';
   }
 
+  String _estatus(Map<String, dynamic> item) {
+    return item['estatus']?.toString() ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    const _cols = ['Nombre', 'Cédula', 'Email', 'Nro', 'Competencia', 'Categoría'];
+    const _cols = ['Nombre', 'Cédula', 'Email', 'Nro', 'Competencia', 'Categoría', 'Estatus'];
     const _selWidth = 36.0;
-    final tableWidth = MediaQuery.of(context).size.width * 0.80;
+    final tableWidth = MediaQuery.of(context).size.width * 0.85;
     final colWidths = [_selWidth, ...List.generate(_cols.length, (i) => (tableWidth - _selWidth) / _cols.length)];
 
     return Scaffold(
@@ -503,6 +510,7 @@ class _NotificarPageState extends State<NotificarPage> {
                                 SizedBox(width: colWidths[4], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
                                 SizedBox(width: colWidths[5], child: Text(_competencia(item), style: const TextStyle(fontSize: 12, color: Colors.grey))),
                                 SizedBox(width: colWidths[6], child: Text(_categoria(item), style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(width: colWidths[7], child: Text(_estatus(item), style: const TextStyle(fontSize: 12))),
                               ],
                             ),
                           );
