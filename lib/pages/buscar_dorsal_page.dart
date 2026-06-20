@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/api_service.dart';
+import '../widgets/acerca_de_dialog.dart';
 
 class BuscarDorsalPage extends StatefulWidget {
   final int? idevento;
@@ -97,7 +98,17 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(canPop: false, child: Scaffold(
-      appBar: AppBar(title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : ''), automaticallyImplyLeading: false),
+      appBar: AppBar(
+        title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : ''),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Acerca de',
+            onPressed: () => AcercaDeDialog.show(context),
+          ),
+        ],
+      ),
       body: widget.idevento == null
           ? Center(
               child: Container(

@@ -1,20 +1,20 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/api_service.dart';
 
-class ListarDorsalesPage extends StatefulWidget {
+class NotificarPage extends StatefulWidget {
   final int idevento;
   final String eventoNombre;
-  const ListarDorsalesPage({super.key, required this.idevento, this.eventoNombre = ''});
+  const NotificarPage({super.key, required this.idevento, this.eventoNombre = ''});
 
   @override
-  State<ListarDorsalesPage> createState() => _ListarDorsalesPageState();
+  State<NotificarPage> createState() => _NotificarPageState();
 }
 
-class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
+class _NotificarPageState extends State<NotificarPage> {
   final _api = ApiService();
   List<Map<String, dynamic>> _items = [];
-  final Map<int, Uint8List?> _imagenesCache = {};
   bool _loading = true;
   final _filterController = TextEditingController();
   String _filter = '';
@@ -23,47 +23,50 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
   int _sortCol = -1;
   bool _sortAsc = true;
   final Set<int> _selectedIds = {};
-  bool _sendingEmail = false;
-  bool _sendingTodos = false;
-  bool _showEnviarTodos = true;
+  bool _sending = false;
 
   List<Map<String, dynamic>> get _filteredItems {
     var items = _items;
     if (_filter.isNotEmpty) {
       final f = _filter.toLowerCase();
-      items = items.where((item) =>
-        (item['nombre']?.toString().toLowerCase().contains(f) ?? false) ||
-        (item['iddocumento']?.toString().toLowerCase().contains(f) ?? false) ||
-        (item['numero']?.toString().toLowerCase().contains(f) ?? false) ||
-        (item['competencia']?.toString().toLowerCase().contains(f) ?? false) ||
-        (item['categoria']?.toString().toLowerCase().contains(f) ?? false) ||
-        ((item['emailpersonal'] ?? item['email'] ?? '').toString().toLowerCase().contains(f))
-      ).toList();
+      items = items.where((item) {
+        final comp = item['competidor'] as Map<String, dynamic>? ?? {};
+        final nombre = '${comp['nombre'] ?? ''} ${comp['apellido'] ?? ''}'.toLowerCase();
+        final doc = (comp['iddocumento'] ?? '').toString().toLowerCase();
+        final email = (comp['emailpersonal'] ?? comp['email'] ?? '').toString().toLowerCase();
+        final numero = (item['numero']?.toString() ?? '').toLowerCase();
+        final competencia = (item['competencia'] is Map ? (item['competencia'] as Map)['descripcion']?.toString() ?? '' : '').toLowerCase();
+        final categoria = (item['categoria'] is Map ? (item['categoria'] as Map)['descripcion']?.toString() ?? '' : '').toLowerCase();
+        final estatus = (item['estatus']?.toString() ?? '').toLowerCase();
+        return nombre.contains(f) || doc.contains(f) || email.contains(f) || numero.contains(f) || competencia.contains(f) || categoria.contains(f) || estatus.contains(f);
+      }).toList();
     }
-    if (_sortCol >= 2) {
+    if (_sortCol >= 0) {
       items.sort((a, b) {
-        final keys = ['', '', 'nombre', 'iddocumento', 'email', 'numero', 'competencia', 'categoria', 'enviado'];
-        final k = keys[_sortCol];
-        String va(String v) => v.toString().toLowerCase();
-        if (_sortCol == 5) {
-          final na = (a[k] as num?)?.toInt() ?? 0;
-          final nb = (b[k] as num?)?.toInt() ?? 0;
-          return _sortAsc ? na.compareTo(nb) : nb.compareTo(na);
+        final compA = a['competidor'] as Map<String, dynamic>? ?? {};
+        final compB = b['competidor'] as Map<String, dynamic>? ?? {};
+        int compareStr(String va, String vb) => _sortAsc ? va.compareTo(vb) : vb.compareTo(va);
+        switch (_sortCol) {
+          case 0:
+            return compareStr('${compA['nombre'] ?? ''} ${compA['apellido'] ?? ''}', '${compB['nombre'] ?? ''} ${compB['apellido'] ?? ''}');
+          case 1:
+            return compareStr(compA['iddocumento']?.toString() ?? '', compB['iddocumento']?.toString() ?? '');
+          case 2:
+            return compareStr((compA['emailpersonal'] ?? compA['email'] ?? '').toString(), (compB['emailpersonal'] ?? compB['email'] ?? '').toString());
+          case 3: {
+            final na = (a['numero'] as num?)?.toInt() ?? 0;
+            final nb = (b['numero'] as num?)?.toInt() ?? 0;
+            return _sortAsc ? na.compareTo(nb) : nb.compareTo(na);
+          }
+          case 4:
+            return compareStr(a['competencia'] is Map ? (a['competencia'] as Map)['descripcion']?.toString() ?? '' : '', b['competencia'] is Map ? (b['competencia'] as Map)['descripcion']?.toString() ?? '' : '');
+          case 5:
+            return compareStr(a['categoria'] is Map ? (a['categoria'] as Map)['descripcion']?.toString() ?? '' : '', b['categoria'] is Map ? (b['categoria'] as Map)['descripcion']?.toString() ?? '' : '');
+          case 6:
+            return compareStr(a['estatus']?.toString() ?? '', b['estatus']?.toString() ?? '');
+          default:
+            return 0;
         }
-        if (_sortCol == 8) {
-          int orden(v) => v == true ? 2 : v == false ? 1 : 0;
-          final ba = orden(a['enviado']);
-          final bb = orden(b['enviado']);
-          return _sortAsc ? ba.compareTo(bb) : bb.compareTo(ba);
-        }
-        if (_sortCol == 4) {
-          final ea = (a['emailpersonal'] ?? a['email'] ?? '').toString().toLowerCase();
-          final eb = (b['emailpersonal'] ?? b['email'] ?? '').toString().toLowerCase();
-          return _sortAsc ? ea.compareTo(eb) : eb.compareTo(ea);
-        }
-        return _sortAsc
-            ? va(a[k] ?? '').compareTo(va(b[k] ?? ''))
-            : va(b[k] ?? '').compareTo(va(a[k] ?? ''));
       });
     }
     return items;
@@ -103,39 +106,23 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     setState(() => _currentPage = page.clamp(0, _pageCount - 1));
   }
 
-  Future<void> _marcarPendiente(int id) async {
-    try {
-      await _api.marcarPendienteDorsal(id);
-      setState(() {
-        final idx = _items.indexWhere((it) => int.parse(it['id'].toString()) == id);
-        if (idx >= 0) _items[idx]['enviado'] = null;
-      });
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
-
   Future<void> _pollTask(String taskId) async {
     while (mounted) {
       await Future.delayed(const Duration(seconds: 2));
       try {
-        final status = await _api.getEmailTaskStatus(taskId);
+        final status = await _api.getNotificacionTaskStatus(taskId);
         if (status['status'] == 'completed') {
           final enviados = status['enviados'] ?? 0;
           final fallidos = (status['fallidos'] as List?) ?? [];
-          final omitidos = fallidos.where(
-            (f) => (f['error'] as String?)?.contains('ya fue enviado') == true,
-          ).length;
-          final realFallidos = fallidos.length - omitidos;
           if (mounted) {
             await _cargar();
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
-                realFallidos > 0
-                    ? 'Enviados: $enviados. Fallidos: $realFallidos. Omitidos: $omitidos.'
-                    : 'Enviados: $enviados. Omitidos: $omitidos.',
+                fallidos.isNotEmpty
+                    ? 'Enviados: $enviados. Fallidos: ${fallidos.length}.'
+                    : 'Enviados: $enviados.',
               ),
-              duration: Duration(seconds: 4),
+              duration: const Duration(seconds: 4),
             ));
           }
           break;
@@ -144,144 +131,196 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     }
   }
 
-  Future<void> _enviarEmail() async {
+  Future<void> _enviarSeleccionados() async {
     final ids = _selectedIds.toList();
-    final yaEnviados = ids.where((id) => _items.any((it) => int.parse(it['id'].toString()) == id && it['enviado'] == true)).length;
     final subjectCtl = TextEditingController();
     final msgCtl = TextEditingController();
+    Uint8List? archivoBytes;
+    String? archivoName;
+
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enviar dorsal por correo'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${ids.length} seleccionado(s)'),
-            if (yaEnviados > 0) Padding(padding: const EdgeInsets.only(top: 8), child: Text('$yaEnviados ya fueron enviados antes y serán omitidos', style: const TextStyle(color: Colors.orange, fontSize: 13))),
-            const SizedBox(height: 12),
-            TextField(controller: subjectCtl, decoration: const InputDecoration(labelText: 'Asunto', border: OutlineInputBorder()), autofocus: true),
-            const SizedBox(height: 12),
-            TextField(controller: msgCtl, decoration: const InputDecoration(labelText: 'Mensaje', border: OutlineInputBorder()), maxLines: 4),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Enviar notificación'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${ids.length} seleccionado(s)'),
+                const SizedBox(height: 12),
+                TextField(controller: subjectCtl, decoration: const InputDecoration(labelText: 'Asunto', border: OutlineInputBorder()), autofocus: true),
+                const SizedBox(height: 12),
+                TextField(controller: msgCtl, decoration: const InputDecoration(labelText: 'Mensaje', border: OutlineInputBorder()), maxLines: 4),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.attach_file, size: 18),
+                      label: Text(archivoName != null ? 'Cambiar archivo' : 'Adjuntar archivo'),
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp'],
+                          withData: true,
+                        );
+                        if (result != null && result.files.single.bytes != null) {
+                          setDialogState(() {
+                            archivoBytes = result.files.single.bytes;
+                            archivoName = result.files.single.name;
+                          });
+                        }
+                      },
+                    ),
+                    if (archivoName != null) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(archivoName!, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => setDialogState(() { archivoBytes = null; archivoName = null; }),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
-        ],
       ),
     );
+
     if (result != true || subjectCtl.text.trim().isEmpty) return;
-    setState(() => _sendingEmail = true);
+    setState(() => _sending = true);
     try {
-      final res = await _api.enviarEmailDorsales(
+      final res = await _api.enviarNotificacion(
         ids: ids,
         subject: subjectCtl.text.trim(),
         message: msgCtl.text.trim(),
+        archivoBytes: archivoBytes,
+        archivoName: archivoName,
       );
       final taskId = res['task_id'];
       if (taskId != null) {
         _pollTask(taskId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enviando correos en segundo plano...')));
-          setState(() => _sendingEmail = false);
         }
       }
-      _cargar();
       _clearSel();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-      setState(() => _sendingEmail = false);
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
   }
 
   Future<void> _enviarTodos() async {
     final subjectCtl = TextEditingController();
     final msgCtl = TextEditingController();
+    Uint8List? archivoBytes;
+    String? archivoName;
+
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enviar todos los dorsales'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${_items.length} dorsal(es) en total'),
-            if (_items.any((it) => it['enviado'] == true))
-              const Padding(padding: EdgeInsets.only(top: 8), child: Text('Los ya enviados serán omitidos', style: TextStyle(color: Colors.orange, fontSize: 13))),
-            const SizedBox(height: 12),
-            TextField(controller: subjectCtl, decoration: const InputDecoration(labelText: 'Asunto', border: OutlineInputBorder()), autofocus: true),
-            const SizedBox(height: 12),
-            TextField(controller: msgCtl, decoration: const InputDecoration(labelText: 'Mensaje', border: OutlineInputBorder()), maxLines: 4),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Enviar notificación a todos'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${_items.length} participante(s) en total'),
+                const SizedBox(height: 12),
+                TextField(controller: subjectCtl, decoration: const InputDecoration(labelText: 'Asunto', border: OutlineInputBorder()), autofocus: true),
+                const SizedBox(height: 12),
+                TextField(controller: msgCtl, decoration: const InputDecoration(labelText: 'Mensaje', border: OutlineInputBorder()), maxLines: 4),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.attach_file, size: 18),
+                      label: Text(archivoName != null ? 'Cambiar archivo' : 'Adjuntar archivo'),
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp'],
+                          withData: true,
+                        );
+                        if (result != null && result.files.single.bytes != null) {
+                          setDialogState(() {
+                            archivoBytes = result.files.single.bytes;
+                            archivoName = result.files.single.name;
+                          });
+                        }
+                      },
+                    ),
+                    if (archivoName != null) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(archivoName!, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => setDialogState(() { archivoBytes = null; archivoName = null; }),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar a todos')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar todos')),
-        ],
       ),
     );
+
     if (result != true || subjectCtl.text.trim().isEmpty) return;
-    setState(() => _sendingTodos = true);
+    setState(() => _sending = true);
     try {
-      final res = await _api.enviarTodosDorsales(
+      final res = await _api.enviarNotificacionTodos(
         idevento: widget.idevento,
         subject: subjectCtl.text.trim(),
         message: msgCtl.text.trim(),
+        archivoBytes: archivoBytes,
+        archivoName: archivoName,
       );
       final taskId = res['task_id'];
       if (taskId != null) {
         _pollTask(taskId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enviando todos los correos en segundo plano...')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enviando correos en segundo plano...')));
         }
       }
-      _cargar();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      if (mounted) setState(() => _sendingTodos = false);
+      if (mounted) setState(() => _sending = false);
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _cargarConfig();
     _cargar();
-  }
-
-  Future<void> _cargarConfig() async {
-    try {
-      final config = await _api.getConfig();
-      final pantalla = config['listarDorsales'] as Map<String, dynamic>? ?? {};
-      if (mounted) setState(() {
-        _showEnviarTodos = pantalla['showEnviarTodos'] ?? true;
-        _pageSize = pantalla['pageSize'] ?? 20;
-      });
-    } catch (_) {}
   }
 
   Future<void> _cargar() async {
     setState(() => _loading = true);
     try {
-      final res = await _api.getDorsalesList(widget.idevento);
-      final items = res.cast<Map<String, dynamic>>();
-      items.sort((a, b) => ((a['numero'] as num?)?.toInt() ?? 0).compareTo((b['numero'] as num?)?.toInt() ?? 0));
-      setState(() { _items = items; _loading = false; });
-      for (final item in items) {
-        _cargarImagen(int.parse(item['id'].toString()));
-      }
+      final res = await _api.getInscritosPorEvento(widget.idevento);
+      setState(() { _items = res.cast<Map<String, dynamic>>(); _loading = false; });
     } catch (e) {
-      debugPrint('Error al listar dorsales: $e');
+      debugPrint('Error al cargar inscritos: $e');
       setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _cargarImagen(int id) async {
-    try {
-      final bytes = await _api.getImagenBytes(id);
-      if (mounted) setState(() => _imagenesCache[id] = bytes);
-    } catch (e) {
-      debugPrint('Error al cargar imagen #$id: $e');
     }
   }
 
@@ -291,23 +330,48 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
     super.dispose();
   }
 
+  String _nombre(Map<String, dynamic> item) {
+    final comp = item['competidor'] as Map<String, dynamic>?;
+    if (comp == null) return '';
+    return '${comp['nombre'] ?? ''} ${comp['apellido'] ?? ''}'.trim();
+  }
+
+  String _documento(Map<String, dynamic> item) {
+    return (item['competidor'] as Map<String, dynamic>?)?['iddocumento']?.toString() ?? '';
+  }
+
+  String _email(Map<String, dynamic> item) {
+    final comp = item['competidor'] as Map<String, dynamic>?;
+    return (comp?['emailpersonal'] ?? comp?['email'] ?? '').toString();
+  }
+
+  String _competencia(Map<String, dynamic> item) {
+    final comp = item['competencia'];
+    return comp is Map ? (comp['descripcion']?.toString() ?? '') : '';
+  }
+
+  String _categoria(Map<String, dynamic> item) {
+    final cat = item['categoria'];
+    return cat is Map ? (cat['descripcion']?.toString() ?? '') : '';
+  }
+
+  String _estatus(Map<String, dynamic> item) {
+    return item['estatus']?.toString() ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    const _cols = ['', 'Dorsal', 'Nombre', 'Cédula', 'Email', 'Nro', 'Competencia', 'Categoría', 'Enviado'];
-    const _imgWidth = 60.0;
+    const _cols = ['Nombre', 'Cédula', 'Email', 'Nro', 'Competencia', 'Categoría', 'Estatus'];
     const _selWidth = 36.0;
-    const _envWidth = 50.0;
-    const _colFracts = [0.20, 0.16, 0.20, 0.09, 0.16, 0.14];
-    final tableWidth = MediaQuery.of(context).size.width * 0.80;
-    final restWidth = tableWidth - _imgWidth - _selWidth - _envWidth;
-    final colWidths = [_selWidth, _imgWidth, ..._colFracts.map((f) => restWidth * f), _envWidth];
+    final tableWidth = MediaQuery.of(context).size.width * 0.85;
+    final colWidths = [_selWidth, ...List.generate(_cols.length, (i) => (tableWidth - _selWidth) / _cols.length)];
 
     return Scaffold(
-      appBar: AppBar(title: Text('Dorsales - ${widget.eventoNombre}')),
+      appBar: AppBar(title: Text('Notificar - ${widget.eventoNombre}')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-              ? const Center(child: Text('No hay dorsales generados'))
+              ? const Center(child: Text('No hay participantes inscritos'))
               : LayoutBuilder(
                   builder: (context, constraints) {
                     final table = SizedBox(
@@ -335,15 +399,14 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   onChanged: (v) { setState(() { _filter = v; _currentPage = 0; }); },
                                 ),
                               ),
-                              if (_showEnviarTodos) const SizedBox(width: 8),
-                              if (_showEnviarTodos)
-                                ElevatedButton.icon(
-                                  icon: _sendingTodos
-                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                      : const Icon(Icons.mail_outline, size: 18),
-                                  label: Text(_sendingTodos ? 'Enviando...' : 'Enviar todos', style: const TextStyle(fontSize: 12)),
-                                  onPressed: (_sendingTodos || _items.isEmpty) ? null : _enviarTodos,
-                                ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                icon: _sending
+                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : const Icon(Icons.mail_outline, size: 18),
+                                label: Text(_sending ? 'Enviando...' : 'Enviar todos', style: const TextStyle(fontSize: 12)),
+                                onPressed: (_sending || _items.isEmpty) ? null : _enviarTodos,
+                              ),
                             ],
                           ),
                         ),
@@ -361,11 +424,11 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                 ),
                                 const SizedBox(width: 8),
                                 ElevatedButton.icon(
-                                  icon: _sendingEmail
+                                  icon: _sending
                                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                                       : const Icon(Icons.email, size: 18),
-                                  label: Text(_sendingEmail ? 'Enviando...' : 'Enviar por correo', style: const TextStyle(fontSize: 12)),
-                                  onPressed: (_sendingEmail || _selectedIds.isEmpty) ? null : _enviarEmail,
+                                  label: Text(_sending ? 'Enviando...' : 'Enviar por correo', style: const TextStyle(fontSize: 12)),
+                                  onPressed: (_sending || _selectedIds.isEmpty) ? null : _enviarSeleccionados,
                                 ),
                               ],
                             ),
@@ -385,18 +448,17 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   },
                                 ),
                               ),
-                              ...List.generate(_cols.length - 1, (i) {
-                                final colIdx = i + 1;
-                                final isSorted = _sortCol == colIdx;
+                              ...List.generate(_cols.length, (i) {
+                                final isSorted = _sortCol == i;
                                 return SizedBox(
-                                  width: colWidths[colIdx],
+                                  width: colWidths[i + 1],
                                   child: GestureDetector(
-                                    onTap: colIdx >= 2 ? () => _sortBy(colIdx) : null,
+                                    onTap: () => _sortBy(i),
                                     child: Row(
                                       children: [
                                         Flexible(
                                           child: Text(
-                                            _cols[colIdx],
+                                            _cols[i],
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
@@ -423,9 +485,7 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                           const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Sin resultados'))),
                         ..._paginatedItems.map((item) {
                           final id = int.parse(item['id'].toString());
-                          final bytes = _imagenesCache[id];
                           final sel = _selectedIds.contains(id);
-                          final enviado = item['enviado'];
                           return Container(
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
@@ -437,42 +497,20 @@ class _ListarDorsalesPageState extends State<ListarDorsalesPage> {
                                   width: colWidths[0],
                                   child: Checkbox(value: sel, onChanged: (_) => _toggleSel(id)),
                                 ),
+                                SizedBox(width: colWidths[1], child: Text(_nombre(item), style: const TextStyle(fontSize: 12))),
+                                SizedBox(width: colWidths[2], child: Text(_documento(item), style: const TextStyle(fontSize: 12))),
                                 SizedBox(
-                                  width: colWidths[1],
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5),
-                                    child: SizedBox(
-                                      height: 50,
-                                      child: bytes != null
-                                          ? ClipRRect(child: Image.memory(bytes, fit: BoxFit.fitWidth))
-                                          : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: colWidths[2], child: Text(item['nombre'] ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(width: colWidths[3], child: Text(item['iddocumento'] ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(
-                                  width: colWidths[4],
+                                  width: colWidths[3],
                                   child: Text(
-                                    (item['emailpersonal'] ?? item['email'] ?? ''),
+                                    _email(item),
                                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                SizedBox(width: colWidths[5], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
-                                SizedBox(width: colWidths[6], child: Text(item['competencia'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
-                                SizedBox(width: colWidths[7], child: Text(item['categoria'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
-                                SizedBox(
-                                  width: colWidths[8],
-                                  child: GestureDetector(
-                                    onTap: () => _marcarPendiente(id),
-                                    child: enviado == true
-                                        ? const Icon(Icons.check_circle, color: Colors.green, size: 22)
-                                        : enviado == false
-                                            ? const Icon(Icons.cancel, color: Colors.red, size: 22)
-                                            : const Icon(Icons.hourglass_empty, color: Colors.grey, size: 22),
-                                  ),
-                                ),
+                                SizedBox(width: colWidths[4], child: Text(item['numero']?.toString() ?? '', style: const TextStyle(fontSize: 12))),
+                                SizedBox(width: colWidths[5], child: Text(_competencia(item), style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(width: colWidths[6], child: Text(_categoria(item), style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                                SizedBox(width: colWidths[7], child: Text(_estatus(item), style: const TextStyle(fontSize: 12))),
                               ],
                             ),
                           );
