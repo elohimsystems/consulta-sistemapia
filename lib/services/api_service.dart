@@ -208,4 +208,56 @@ class ApiService {
     if (res.statusCode == 200) return res.bodyBytes;
     throw Exception('Error al generar preview: ${res.body}');
   }
+
+  // ---- Notificaciones ----
+  Future<Map<String, dynamic>> enviarNotificacion({
+    required List<int> ids,
+    required String subject,
+    required String message,
+    Uint8List? archivoBytes,
+    String? archivoName,
+  }) async {
+    final req = http.MultipartRequest('POST', Uri.parse('$baseUrl/notificaciones/enviar'));
+    req.fields['ids'] = ids.join(',');
+    req.fields['subject'] = subject;
+    req.fields['message'] = message;
+    if (archivoBytes != null && archivoName != null) {
+      req.files.add(http.MultipartFile.fromBytes('archivo', archivoBytes, filename: archivoName));
+    }
+    final streamed = await req.send();
+    final res = await http.Response.fromStream(streamed);
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al enviar notificación: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> enviarNotificacionTodos({
+    required int idevento,
+    required String subject,
+    required String message,
+    Uint8List? archivoBytes,
+    String? archivoName,
+  }) async {
+    final req = http.MultipartRequest('POST', Uri.parse('$baseUrl/notificaciones/enviar/$idevento'));
+    req.fields['subject'] = subject;
+    req.fields['message'] = message;
+    if (archivoBytes != null && archivoName != null) {
+      req.files.add(http.MultipartFile.fromBytes('archivo', archivoBytes, filename: archivoName));
+    }
+    final streamed = await req.send();
+    final res = await http.Response.fromStream(streamed);
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al enviar notificación: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> getNotificacionTaskStatus(String taskId) async {
+    final res = await http.get(Uri.parse('$baseUrl/notificaciones/email-task/$taskId'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al obtener estado: ${res.body}');
+  }
+
+  Future<List<dynamic>> getInscritosPorEvento(int idevento) async {
+    final res = await http.get(Uri.parse('$baseUrl/inscritos/evento/$idevento'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al cargar inscritos: ${res.body}');
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../widgets/acerca_de_dialog.dart';
 import 'generar_dorsal_page.dart';
+import 'notificar_page.dart';
 
 class EventosListPage extends StatefulWidget {
   const EventosListPage({super.key});
@@ -76,13 +77,30 @@ class _EventosListPageState extends State<EventosListPage> {
                               ),
                             ],
                           ),
-                          trailing: ElevatedButton.icon(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => GenerarDorsalPage(evento: e)),
-                            ),
-                            icon: const Icon(Icons.confirmation_number, size: 18),
-                            label: const Text('Dorsales'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => NotificarPage(
+                                    idevento: int.parse(e['id'].toString()),
+                                    eventoNombre: e['nombre'] ?? '',
+                                  )),
+                                ),
+                                icon: const Icon(Icons.notifications, size: 18),
+                                label: const Text('Notificar'),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => GenerarDorsalPage(evento: e)),
+                                ),
+                                icon: const Icon(Icons.confirmation_number, size: 18),
+                                label: const Text('Dorsales'),
+                              ),
+                            ],
                           ),
                         ),
                       );
