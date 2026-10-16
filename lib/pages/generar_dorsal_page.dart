@@ -16,19 +16,44 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
   final _api = ApiService();
   final _picker = ImagePicker();
 
+  static const _googleFontsList = [
+    'Roboto',
+    'Open Sans',
+    'Montserrat',
+    'Oswald',
+    'Lato',
+    'Poppins',
+    'Raleway',
+    'Anton',
+    'Bebas Neue',
+    'League Gothic',
+    'Playfair Display',
+    'Merriweather',
+    'Lora',
+    'Pacifico',
+    'Trebuchet MS',
+    'Arial',
+    'Impact',
+  ];
+
   static const _camposLabels = {
-    'numero': 'Número', 'nombre': 'Nombre', 'iddocumento': 'Documento',
-    'sexo': 'Sexo', 'equipo': 'Equipo', 'competencia': 'Competencia', 'categoria': 'Categoría',
+    'numero': 'Número',
+    'nombre': 'Nombre',
+    'iddocumento': 'Documento',
+    'sexo': 'Sexo',
+    'equipo': 'Equipo',
+    'competencia': 'Competencia',
+    'categoria': 'Categoría',
   };
 
   static const _camposDefaults = {
-    'numero': {'posicionX': '400', 'posicionY': '200', 'fontSize': '72', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': '123'},
-    'nombre': {'posicionX': '400', 'posicionY': '300', 'fontSize': '36', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Nombre Apellido'},
-    'iddocumento': {'posicionX': '400', 'posicionY': '350', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Doc: V-12345678'},
-    'sexo': {'posicionX': '400', 'posicionY': '400', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Sexo: M'},
-    'equipo': {'posicionX': '400', 'posicionY': '450', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Equipo: Nombre'},
-    'competencia': {'posicionX': '400', 'posicionY': '500', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Competencia'},
-    'categoria': {'posicionX': '400', 'posicionY': '550', 'fontSize': '28', 'fontFamily': 'sans-serif', 'fontColor': '#000000', 'valor': 'Cat: Categoria'},
+    'numero': {'posicionX': '400', 'posicionY': '200', 'fontSize': '72', 'fontFamily': 'Roboto', 'fontWeight': '700', 'isItalic': 'false', 'fontColor': '#000000', 'valor': '123'},
+    'nombre': {'posicionX': '400', 'posicionY': '300', 'fontSize': '36', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Nombre Apellido'},
+    'iddocumento': {'posicionX': '400', 'posicionY': '350', 'fontSize': '28', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Doc: V-12345678'},
+    'sexo': {'posicionX': '400', 'posicionY': '400', 'fontSize': '28', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Sexo: M'},
+    'equipo': {'posicionX': '400', 'posicionY': '450', 'fontSize': '28', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Equipo: Nombre'},
+    'competencia': {'posicionX': '400', 'posicionY': '500', 'fontSize': '28', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Competencia'},
+    'categoria': {'posicionX': '400', 'posicionY': '550', 'fontSize': '28', 'fontFamily': 'Roboto', 'fontWeight': '400', 'isItalic': 'false', 'fontColor': '#000000', 'valor': 'Cat: Categoria'},
   };
 
   late int _idevento;
@@ -45,8 +70,13 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
   int _dorsalesExistentes = 0;
 
   final _camposCheck = <String, bool>{
-    'numero': true, 'nombre': true, 'iddocumento': true,
-    'sexo': false, 'equipo': false, 'competencia': false, 'categoria': false,
+    'numero': true,
+    'nombre': true,
+    'iddocumento': true,
+    'sexo': false,
+    'equipo': false,
+    'competencia': false,
+    'categoria': false,
   };
 
   final _camposConfig = <String, Map<String, TextEditingController>>{};
@@ -100,9 +130,11 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
         _camposConfig[k]!['posicionX']!.text = (saved['posicionX'] ?? _camposDefaults[k]!['posicionX']).toString();
         _camposConfig[k]!['posicionY']!.text = (saved['posicionY'] ?? _camposDefaults[k]!['posicionY']).toString();
         _camposConfig[k]!['fontSize']!.text = (saved['fontSize'] ?? _camposDefaults[k]!['fontSize']).toString();
-        _camposConfig[k]!['fontFamily']!.text = saved['fontFamily'] ?? _camposDefaults[k]!['fontFamily']!;
-        _camposConfig[k]!['fontColor']!.text = saved['fontColor'] ?? _camposDefaults[k]!['fontColor']!;
-        _camposConfig[k]!['valor']!.text = saved['valor'] ?? _camposDefaults[k]!['valor']!;
+        _camposConfig[k]!['fontFamily']!.text = (saved['fontFamily'] ?? _camposDefaults[k]!['fontFamily']!).toString();
+        _camposConfig[k]!['fontWeight']!.text = (saved['fontWeight'] ?? _camposDefaults[k]!['fontWeight']!).toString();
+        _camposConfig[k]!['isItalic']!.text = (saved['isItalic'] ?? _camposDefaults[k]!['isItalic']!).toString();
+        _camposConfig[k]!['fontColor']!.text = (saved['fontColor'] ?? _camposDefaults[k]!['fontColor']!).toString();
+        _camposConfig[k]!['valor']!.text = (saved['valor'] ?? _camposDefaults[k]!['valor']!).toString();
       } else {
         for (final kv in _camposDefaults[k]!.entries) {
           _camposConfig[k]![kv.key]!.text = kv.value;
@@ -142,6 +174,8 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
         'posicionY': int.tryParse(c['posicionY']!.text) ?? 500,
         'fontSize': int.tryParse(c['fontSize']!.text) ?? 72,
         'fontFamily': c['fontFamily']!.text,
+        'fontWeight': int.tryParse(c['fontWeight']!.text) ?? 400,
+        'isItalic': c['isItalic']!.text == 'true',
         'fontColor': c['fontColor']!.text,
         'valor': c['valor']!.text,
       });
@@ -164,6 +198,8 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
           'posicionY': int.tryParse(c['posicionY']!.text) ?? 500,
           'fontSize': int.tryParse(c['fontSize']!.text) ?? 72,
           'fontFamily': c['fontFamily']!.text,
+          'fontWeight': int.tryParse(c['fontWeight']!.text) ?? 400,
+          'isItalic': c['isItalic']!.text == 'true',
           'fontColor': c['fontColor']!.text,
           'valor': c['valor']!.text,
         };
@@ -280,7 +316,9 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
   void dispose() {
     _documentosController.dispose();
     for (final c in _camposConfig.values) {
-      for (final tc in c.values) tc.dispose();
+      for (final tc in c.values) {
+        tc.dispose();
+      }
     }
     super.dispose();
   }
@@ -308,6 +346,108 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
     }
     if (sexo != null && sexo.isNotEmpty) nombres.add('Sexo: $sexo');
     return nombres.isNotEmpty ? nombres.join(', ') : 'Imagen #${bm['id']}';
+  }
+
+  Widget _buildFontDropdown(Map<String, TextEditingController> c) {
+    final currentFont = c['fontFamily']!.text;
+    final isInList = _googleFontsList.contains(currentFont);
+    final selectedValue = isInList ? currentFont : 'Custom';
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 130,
+          child: DropdownButtonFormField<String>(
+            value: selectedValue,
+            decoration: const InputDecoration(
+              labelText: 'Fuente',
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            ),
+            style: TextStyle(fontSize: 12, color: Colors.black87),
+            items: [
+              ..._googleFontsList.map((f) => DropdownMenuItem(value: f, child: Text(f, style: const TextStyle(fontSize: 12)))),
+              const DropdownMenuItem(value: 'Custom', child: Text('Otra...', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic))),
+            ],
+            onChanged: (val) {
+              if (val == null) return;
+              if (val != 'Custom') {
+                setState(() {
+                  c['fontFamily']!.text = val;
+                });
+              } else {
+                setState(() {
+                  if (isInList) c['fontFamily']!.text = '';
+                });
+              }
+            },
+          ),
+        ),
+        if (!isInList) ...[
+          const SizedBox(width: 4),
+          SizedBox(
+            width: 100,
+            child: TextField(
+              controller: c['fontFamily'],
+              decoration: const InputDecoration(
+                labelText: 'Nombre fuente',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildWeightDropdown(Map<String, TextEditingController> c) {
+    final weights = {
+      '300': '300 Fina',
+      '400': '400 Normal',
+      '600': '600 Semi-Negrita',
+      '700': '700 Negrita',
+      '900': '900 Black',
+    };
+    final currentWeight = c['fontWeight']!.text;
+    final validVal = weights.containsKey(currentWeight) ? currentWeight : '400';
+
+    return SizedBox(
+      width: 120,
+      child: DropdownButtonFormField<String>(
+        value: validVal,
+        decoration: const InputDecoration(
+          labelText: 'Peso',
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        ),
+        style: TextStyle(fontSize: 12, color: Colors.black87),
+        items: weights.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: const TextStyle(fontSize: 11)))).toList(),
+        onChanged: (val) {
+          if (val != null) {
+            setState(() {
+              c['fontWeight']!.text = val;
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildItalicChip(Map<String, TextEditingController> c) {
+    final isItalic = c['isItalic']!.text == 'true';
+    return FilterChip(
+      label: const Text('Itálica', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
+      selected: isItalic,
+      selectedColor: Colors.amber.shade200,
+      onSelected: (v) {
+        setState(() {
+          c['isItalic']!.text = v ? 'true' : 'false';
+        });
+      },
+    );
   }
 
   @override
@@ -401,7 +541,7 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
                         final k = e.key;
                         final c = _camposConfig[k]!;
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -415,7 +555,8 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
                               Expanded(
                                 child: Wrap(
                                   spacing: 6,
-                                  runSpacing: 4,
+                                  runSpacing: 6,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     SizedBox(
                                       width: 120,
@@ -433,10 +574,9 @@ class _GenerarDorsalPageState extends State<GenerarDorsalPage> {
                                       width: 60,
                                       child: TextField(controller: c['fontSize'], decoration: const InputDecoration(labelText: 'Tamaño', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8)), keyboardType: TextInputType.number, style: const TextStyle(fontSize: 12)),
                                     ),
-                                    SizedBox(
-                                      width: 80,
-                                      child: TextField(controller: c['fontFamily'], decoration: const InputDecoration(labelText: 'Fuente', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8)), style: const TextStyle(fontSize: 12)),
-                                    ),
+                                    _buildFontDropdown(c),
+                                    _buildWeightDropdown(c),
+                                    _buildItalicChip(c),
                                     SizedBox(
                                       width: 80,
                                       child: TextField(controller: c['fontColor'], decoration: const InputDecoration(labelText: 'Color', isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8)), style: const TextStyle(fontSize: 12)),
