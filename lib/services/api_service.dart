@@ -172,6 +172,13 @@ class ApiService {
 
   String baseImagenUrl(int id) => '$baseUrl/dorsales/base-imagen/$id/imagen';
 
+  String eventoLogoUrl(String logo) {
+    if (logo.startsWith('http://') || logo.startsWith('https://')) {
+      return logo;
+    }
+    return '$baseUrl/eventos/logo/$logo';
+  }
+
   Future<void> updateBaseImagen(int id, Map<String, dynamic> data) async {
     final res = await http.patch(
       Uri.parse('$baseUrl/dorsales/base-imagen/$id'),

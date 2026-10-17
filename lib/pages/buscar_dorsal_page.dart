@@ -24,6 +24,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   bool _mostrandoResultados = false;
   String? _error;
   String _eventoNombre = '';
+  String? _eventoLogo;
 
   @override
   void initState() {
@@ -34,14 +35,23 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   Future<void> _cargarEvento() async {
     final id = widget.idevento;
     if (id == null) {
-      setState(() => _eventoNombre = '');
+      setState(() {
+        _eventoNombre = '';
+        _eventoLogo = null;
+      });
       return;
     }
     try {
       final evento = await _api.getEvento(id);
-      setState(() => _eventoNombre = evento['nombre']?.toString() ?? 'Evento #$id');
+      setState(() {
+        _eventoNombre = evento['nombre']?.toString() ?? 'Evento #$id';
+        _eventoLogo = evento['logo']?.toString();
+      });
     } catch (e) {
-      _eventoNombre = 'Evento #$id';
+      setState(() {
+        _eventoNombre = 'Evento #$id';
+        _eventoLogo = null;
+      });
     }
   }
 
@@ -191,8 +201,46 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
       canPop: false,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.idevento != null ? 'Consulta tu inscripción - $_eventoNombre' : ''),
+          centerTitle: true,
+          toolbarHeight: 64,
           automaticallyImplyLeading: false,
+          title: widget.idevento != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_eventoLogo != null && _eventoLogo!.isNotEmpty) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.network(
+                              _api.eventoLogoUrl(_eventoLogo!),
+                              height: 30,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Flexible(
+                          child: Text(
+                            _eventoNombre,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Consulta tu inscripción',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                    ),
+                  ],
+                )
+              : const Text(''),
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
