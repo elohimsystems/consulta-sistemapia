@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'pages/config_mail_page.dart';
 import 'pages/eventos_list_page.dart';
 import 'pages/buscar_dorsal_page.dart';
 
@@ -18,9 +19,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
       routes: {
         '/eventos': (context) => const EventosListPage(),
+        '/config_mail': (context) => const ConfigMailPage(),
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '');
+        if (uri.path == '/config_mail' || uri.path == '/config-mail') {
+          return MaterialPageRoute(builder: (_) => const ConfigMailPage());
+        }
         if (uri.path == '/') {
           return MaterialPageRoute(builder: (_) => const BuscarDorsalPage());
         }
@@ -32,7 +37,7 @@ class MyApp extends StatelessWidget {
           }
         }
         return MaterialPageRoute(builder: (_) => const EventosListPage());
-      }
+      },
     );
   }
 }

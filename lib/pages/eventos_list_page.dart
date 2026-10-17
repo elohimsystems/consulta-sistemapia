@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../widgets/acerca_de_dialog.dart';
+import 'config_mail_page.dart';
 import 'generar_dorsal_page.dart';
 import 'notificar_page.dart';
 
@@ -27,11 +28,16 @@ class _EventosListPageState extends State<EventosListPage> {
     setState(() => _loading = true);
     try {
       final eventos = await _api.getEventosActivos();
-      setState(() { _eventos = eventos; _loading = false; });
+      setState(() {
+        _eventos = eventos;
+        _loading = false;
+      });
     } catch (e) {
       debugPrint('Error al cargar eventos: $e');
       setState(() => _loading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -41,6 +47,14 @@ class _EventosListPageState extends State<EventosListPage> {
       appBar: AppBar(
         title: const Text('Eventos'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.mark_email_read),
+            tooltip: 'Configurar Correos',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ConfigMailPage()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Acerca de',
@@ -83,10 +97,12 @@ class _EventosListPageState extends State<EventosListPage> {
                               ElevatedButton.icon(
                                 onPressed: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => NotificarPage(
-                                    idevento: int.parse(e['id'].toString()),
-                                    eventoNombre: e['nombre'] ?? '',
-                                  )),
+                                  MaterialPageRoute(
+                                    builder: (_) => NotificarPage(
+                                      idevento: int.parse(e['id'].toString()),
+                                      eventoNombre: e['nombre'] ?? '',
+                                    ),
+                                  ),
                                 ),
                                 icon: const Icon(Icons.notifications, size: 18),
                                 label: const Text('Notificar'),

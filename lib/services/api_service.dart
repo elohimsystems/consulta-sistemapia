@@ -260,4 +260,51 @@ class ApiService {
     if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
     throw Exception('Error al cargar inscritos: ${res.body}');
   }
+
+  // ---- Proveedores de Correo ----
+  Future<List<dynamic>> getMailProviders() async {
+    final res = await http.get(Uri.parse('$baseUrl/mail/providers'));
+    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+    throw Exception('Error al cargar proveedores de correo: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> createMailProvider(Map<String, dynamic> data) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/mail/providers'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al crear proveedor de correo: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> updateMailProvider(int id, Map<String, dynamic> data) async {
+    final res = await http.patch(
+      Uri.parse('$baseUrl/mail/providers/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+    if (res.statusCode == 200) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al actualizar proveedor de correo: ${res.body}');
+  }
+
+  Future<void> deleteMailProvider(int id) async {
+    final res = await http.delete(Uri.parse('$baseUrl/mail/providers/$id'));
+    if (res.statusCode != 200) throw Exception('Error al eliminar proveedor: ${res.body}');
+  }
+
+  Future<void> activarMailProvider(int id) async {
+    final res = await http.patch(Uri.parse('$baseUrl/mail/providers/$id/activar'));
+    if (res.statusCode != 200) throw Exception('Error al activar proveedor: ${res.body}');
+  }
+
+  Future<Map<String, dynamic>> testMailProvider({int? id, required String email}) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/mail/providers/test'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': id, 'email': email}),
+    );
+    if (res.statusCode == 200 || res.statusCode == 201) return jsonDecode(res.body) as Map<String, dynamic>;
+    throw Exception('Error al probar proveedor: ${res.body}');
+  }
 }
