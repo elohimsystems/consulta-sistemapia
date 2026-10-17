@@ -294,28 +294,13 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                               ),
                               const SizedBox(height: 8),
                               if (bytes != null)
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => _compartir(bytes, item['nombre'] ?? 'Participante', id),
-                                        icon: const Icon(Icons.share),
-                                        label: const Text('Compartir'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    OutlinedButton.icon(
-                                      onPressed: () {
-                                        final imgUrl = _api.imagenUrl(id);
-                                        Clipboard.setData(ClipboardData(text: imgUrl));
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Enlace de imagen copiado al portapapeles')),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.copy),
-                                      label: const Text('Copiar enlace'),
-                                    ),
-                                  ],
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => _compartir(bytes, item['nombre'] ?? 'Participante', id),
+                                    icon: const Icon(Icons.share),
+                                    label: const Text('Compartir'),
+                                  ),
                                 ),
                             ],
                           ),
