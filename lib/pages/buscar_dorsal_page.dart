@@ -175,19 +175,11 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
           _api.eventoLogoUrl(_eventoLogo!),
           height: 32,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Image.asset(
-            'assets/images/logo_sistemapia.png',
-            height: 32,
-            fit: BoxFit.contain,
-          ),
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
         ),
       );
     }
-    return Image.asset(
-      'assets/images/logo_sistemapia.png',
-      height: 32,
-      fit: BoxFit.contain,
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildFooterSistemaPia() {
@@ -264,8 +256,10 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildEventoLogo(),
-                        const SizedBox(width: 8),
+                        if (_eventoLogo != null && _eventoLogo!.isNotEmpty) ...[
+                          _buildEventoLogo(),
+                          const SizedBox(width: 8),
+                        ],
                         Flexible(
                           child: Text(
                             _eventoNombre,
