@@ -175,10 +175,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
           _api.eventoLogoUrl(_eventoLogo!),
           height: 32,
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('Error al cargar logo de evento ($_eventoLogo): $error');
-            return const SizedBox.shrink();
-          },
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
         ),
       );
     }
