@@ -174,9 +174,9 @@ class ApiService {
 
   String eventoLogoUrl(String logo) {
     if (logo.startsWith('http://') || logo.startsWith('https://')) {
-      return logo;
+      return Uri.encodeFull(logo);
     }
-    return '$baseUrl/eventos/logo/$logo';
+    return Uri.encodeFull('$baseUrl/eventos/logo/$logo');
   }
 
   Future<void> updateBaseImagen(int id, Map<String, dynamic> data) async {

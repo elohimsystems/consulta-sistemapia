@@ -26,10 +26,36 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   String _eventoNombre = '';
   String? _eventoLogo;
 
+  String _footerUrl = 'https://www.sistemapia.com.ve';
+  String _footerText = 'SistemaPIA';
+  String _poweredByText = 'Powered by';
+
   @override
   void initState() {
     super.initState();
     _cargarEvento();
+    _cargarConfiguracion();
+  }
+
+  Future<void> _cargarConfiguracion() async {
+    try {
+      final config = await _api.getConfig();
+      if (mounted) {
+        setState(() {
+          if (config['footerUrl'] != null && config['footerUrl'].toString().isNotEmpty) {
+            _footerUrl = config['footerUrl'].toString();
+          }
+          if (config['footerText'] != null && config['footerText'].toString().isNotEmpty) {
+            _footerText = config['footerText'].toString();
+          }
+          if (config['poweredByText'] != null && config['poweredByText'].toString().isNotEmpty) {
+            _poweredByText = config['poweredByText'].toString();
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('No se pudo cargar la configuración remota: $e');
+    }
   }
 
   Future<void> _cargarEvento() async {
@@ -169,7 +195,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
       padding: const EdgeInsets.only(top: 16, bottom: 24),
       child: InkWell(
         onTap: () async {
-          final url = Uri.parse('https://www.sistemapia.com.ve');
+          final url = Uri.parse(_footerUrl);
           if (await canLaunchUrl(url)) {
             await launchUrl(url, mode: LaunchMode.externalApplication);
           }
@@ -189,21 +215,21 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
               const SizedBox(width: 12),
-              const Column(
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Powered by',
-                    style: TextStyle(
+                    _poweredByText,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Colors.black54,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'SistemaPIA',
-                    style: TextStyle(
+                    _footerText,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF003366),
