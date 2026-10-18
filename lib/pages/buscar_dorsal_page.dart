@@ -141,12 +141,35 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     super.dispose();
   }
 
+  Widget _buildEventoLogo() {
+    if (_eventoLogo != null && _eventoLogo!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.network(
+          _api.eventoLogoUrl(_eventoLogo!),
+          height: 32,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Image.asset(
+            'assets/images/logo_sistemapia.png',
+            height: 32,
+            fit: BoxFit.contain,
+          ),
+        ),
+      );
+    }
+    return Image.asset(
+      'assets/images/logo_sistemapia.png',
+      height: 32,
+      fit: BoxFit.contain,
+    );
+  }
+
   Widget _buildFooterSistemaPia() {
     return Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 24),
       child: InkWell(
         onTap: () async {
-          final url = Uri.parse('https://www.sistemapia.com');
+          final url = Uri.parse('https://www.sistemapia.com.ve');
           if (await canLaunchUrl(url)) {
             await launchUrl(url, mode: LaunchMode.externalApplication);
           }
@@ -200,7 +223,10 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0.5,
           centerTitle: true,
           toolbarHeight: 64,
           automaticallyImplyLeading: false,
@@ -212,22 +238,12 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (_eventoLogo != null && _eventoLogo!.isNotEmpty) ...[
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              _api.eventoLogoUrl(_eventoLogo!),
-                              height: 30,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                        _buildEventoLogo(),
+                        const SizedBox(width: 8),
                         Flexible(
                           child: Text(
                             _eventoNombre,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -236,14 +252,14 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                     const SizedBox(height: 2),
                     const Text(
                       'Consulta tu inscripción',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.black54),
                     ),
                   ],
                 )
               : const Text(''),
           actions: [
             IconButton(
-              icon: const Icon(Icons.info_outline),
+              icon: const Icon(Icons.info_outline, color: Colors.black87),
               tooltip: 'Acerca de',
               onPressed: () => AcercaDeDialog.show(context),
             ),
@@ -306,6 +322,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                           child: Column(
                             children: [
                               Card(
+                                color: Colors.white,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   child: Row(
@@ -326,6 +343,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                               ),
                               const SizedBox(height: 12),
                               Card(
+                                color: Colors.white,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: SizedBox(

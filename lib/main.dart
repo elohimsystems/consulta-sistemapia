@@ -16,7 +16,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SistemaPIA',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          surface: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.white,
+      ),
       routes: {
         '/eventos': (context) => const EventosListPage(),
         '/config_mail': (context) => const ConfigMailPage(),
