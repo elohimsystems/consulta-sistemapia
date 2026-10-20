@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_info.dart';
 import '../services/api_service.dart';
 
@@ -18,21 +19,22 @@ class AcercaDeDialog extends StatefulWidget {
 
 class _AcercaDeDialogState extends State<AcercaDeDialog> {
   final _api = ApiService();
-  Map<String, dynamic>? _apiVersion;
-  String? _error;
+  String _companyUrl = 'https://www.elohimsystems.com';
 
   @override
   void initState() {
     super.initState();
-    _cargarVersionApi();
+    _cargarConfiguracion();
   }
 
-  Future<void> _cargarVersionApi() async {
+  Future<void> _cargarConfiguracion() async {
     try {
-      final v = await _api.getVersion();
-      if (mounted) setState(() => _apiVersion = v);
+      final cfg = await _api.getConfig();
+      if (mounted && cfg['companyUrl'] != null && cfg['companyUrl'].toString().isNotEmpty) {
+        setState(() => _companyUrl = cfg['companyUrl'].toString());
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo conectar con la API');
+      debugPrint('Error al cargar configuración remota: $e');
     }
   }
 
@@ -40,14 +42,17 @@ class _AcercaDeDialogState extends State<AcercaDeDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final compatible = _apiVersion != null
-        ? _esCompatible(_apiVersion!['version'] as String, AppInfo.minApiVersion)
-        : null;
-
     return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
       title: Column(
         children: [
-          Icon(Icons.info_outline, size: 48, color: theme.colorScheme.primary),
+          Image.asset(
+            'assets/images/logo_sistemapia.png',
+            height: 48,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(Icons.info_outline, size: 48, color: theme.colorScheme.primary),
+          ),
           const SizedBox(height: 8),
           Text(AppInfo.nombre, style: theme.textTheme.headlineSmall),
         ],
@@ -56,18 +61,36 @@ class _AcercaDeDialogState extends State<AcercaDeDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _item('App', AppInfo.version),
+          _item('Versión', AppInfo.version),
           const SizedBox(height: 8),
-          _item(
-            'API',
-            _apiVersion != null
-                ? _apiVersion!['version'] as String
-                : (_error ?? 'Cargando...'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(
+                width: 80,
+                child: Text('Empresa', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final url = Uri.parse(_companyUrl);
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(4),
+                  child: Text(
+                    AppInfo.empresa,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          _item('API mínima', AppInfo.minApiVersion),
-          const SizedBox(height: 8),
-          _item('Empresa', AppInfo.empresa),
           const SizedBox(height: 12),
           Text('Desarrolladores', style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
@@ -75,29 +98,6 @@ class _AcercaDeDialogState extends State<AcercaDeDialog> {
             padding: const EdgeInsets.only(left: 8, top: 2),
             child: Text('• $d'),
           )),
-          if (compatible == false) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade300),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'La versión de la API no es compatible con esta versión de la app. Actualiza la app o la API.',
-                      style: TextStyle(color: Colors.orange.shade900, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
       actions: [
@@ -107,18 +107,6 @@ class _AcercaDeDialogState extends State<AcercaDeDialog> {
         ),
       ],
     );
-  }
-
-  bool _esCompatible(String versionActual, String versionMinima) {
-    final vAct = versionActual.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    final vMin = versionMinima.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    for (int i = 0; i < 3; i++) {
-      final a = i < vAct.length ? vAct[i] : 0;
-      final m = i < vMin.length ? vMin[i] : 0;
-      if (a < m) return false;
-      if (a > m) return true;
-    }
-    return true;
   }
 
   Widget _item(String label, String value) {
