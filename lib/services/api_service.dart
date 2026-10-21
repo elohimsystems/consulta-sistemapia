@@ -2,8 +2,31 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
+class ServerConnectionException implements Exception {
+  final String message;
+  ServerConnectionException([this.message = 'No hay conexión con el servidor. Verifique su conexión o intente más tarde.']);
+  @override
+  String toString() => message;
+}
+
+class NotFoundException implements Exception {
+  final String message;
+  NotFoundException([this.message = 'No se encontraron dorsales para este documento.']);
+  @override
+  String toString() => message;
+}
+
 class ApiService {
   static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:4550');
+
+  Future<bool> checkHealth() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/config')).timeout(const Duration(seconds: 4));
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<List<dynamic>> getEventos() async {
     final res = await http.get(Uri.parse('$baseUrl/eventos'));
@@ -112,15 +135,27 @@ class ApiService {
   }
 
   Future<List<dynamic>> buscarDorsal(String iddocumento) async {
-    final res = await http.get(Uri.parse('$baseUrl/dorsales/buscar/$iddocumento'));
-    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
-    throw Exception('No se encontraron dorsales: ${res.body}');
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/dorsales/buscar/$iddocumento')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+      if (res.statusCode == 404) throw NotFoundException('No se encontraron dorsales para este documento');
+      throw ServerConnectionException('Error en el servidor (${res.statusCode})');
+    } catch (e) {
+      if (e is NotFoundException) rethrow;
+      throw ServerConnectionException('No se pudo conectar con el servidor. Verifique su conexión a internet o intente más tarde.');
+    }
   }
 
   Future<List<dynamic>> buscarDorsalEnEvento(int idevento, String iddocumento) async {
-    final res = await http.get(Uri.parse('$baseUrl/dorsales/buscar/$idevento/$iddocumento'));
-    if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
-    throw Exception('No se encontraron dorsales: ${res.body}');
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/dorsales/buscar/$idevento/$iddocumento')).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) return jsonDecode(res.body) as List<dynamic>;
+      if (res.statusCode == 404) throw NotFoundException('No se encontraron dorsales para este documento');
+      throw ServerConnectionException('Error en el servidor (${res.statusCode})');
+    } catch (e) {
+      if (e is NotFoundException) rethrow;
+      throw ServerConnectionException('No se pudo conectar con el servidor. Verifique su conexión a internet o intente más tarde.');
+    }
   }
 
   Future<List<dynamic>> getDorsalesList(int idevento) async {

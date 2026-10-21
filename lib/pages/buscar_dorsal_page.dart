@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
@@ -22,6 +21,8 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   final Map<int, Uint8List?> _imagenesCache = {};
   bool _loading = false;
   bool _mostrandoResultados = false;
+  bool _serverConnected = true;
+  bool _checkingServer = false;
   String? _error;
   String _eventoNombre = '';
   String? _eventoLogo;
@@ -33,8 +34,20 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   @override
   void initState() {
     super.initState();
+    _verificarConexion();
     _cargarEvento();
     _cargarConfiguracion();
+  }
+
+  Future<void> _verificarConexion() async {
+    setState(() => _checkingServer = true);
+    final connected = await _api.checkHealth();
+    if (mounted) {
+      setState(() {
+        _serverConnected = connected;
+        _checkingServer = false;
+      });
+    }
   }
 
   Future<void> _cargarConfiguracion() async {
@@ -42,6 +55,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
       final config = await _api.getConfig();
       if (mounted) {
         setState(() {
+          _serverConnected = true;
           if (config['footerUrl'] != null && config['footerUrl'].toString().isNotEmpty) {
             _footerUrl = config['footerUrl'].toString();
           }
@@ -55,6 +69,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
       }
     } catch (e) {
       debugPrint('No se pudo cargar la configuración remota: $e');
+      if (mounted) setState(() => _serverConnected = false);
     }
   }
 
@@ -69,15 +84,21 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
     }
     try {
       final evento = await _api.getEvento(id);
-      setState(() {
-        _eventoNombre = evento['nombre']?.toString() ?? 'Evento #$id';
-        _eventoLogo = evento['logo']?.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _serverConnected = true;
+          _eventoNombre = evento['nombre']?.toString() ?? 'Evento #$id';
+          _eventoLogo = evento['logo']?.toString();
+        });
+      }
     } catch (e) {
-      setState(() {
-        _eventoNombre = 'Evento #$id';
-        _eventoLogo = null;
-      });
+      if (mounted) {
+        setState(() {
+          _eventoNombre = 'Evento #$id';
+          _eventoLogo = null;
+          _serverConnected = false;
+        });
+      }
     }
   }
 
@@ -107,21 +128,34 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
           ? await _api.buscarDorsalEnEvento(widget.idevento!, doc)
           : await _api.buscarDorsal(doc);
       final items = res.cast<Map<String, dynamic>>();
-      setState(() {
-        _resultados = items;
-        _mostrandoResultados = true;
-      });
+      if (mounted) {
+        setState(() {
+          _resultados = items;
+          _mostrandoResultados = true;
+          _serverConnected = true;
+        });
+      }
       for (final item in items) {
         _cargarImagen(int.parse(item['id'].toString()));
       }
     } catch (e) {
       debugPrint('Error al buscar dorsal: $e');
-      setState(() {
-        _error = 'No se encontraron dorsales para este documento';
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          if (e is NotFoundException) {
+            _error = e.message;
+          } else if (e is ServerConnectionException) {
+            _error = e.message;
+            _serverConnected = false;
+          } else {
+            _error = 'Error de conexión con el servidor. Intente más tarde.';
+            _serverConnected = false;
+          }
+          _loading = false;
+        });
+      }
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _compartir(Uint8List bytes, String nombre, int id) async {
@@ -155,7 +189,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
   Future<void> _cargarImagen(int id) async {
     try {
       final bytes = await _api.getImagenBytes(id);
-      setState(() => _imagenesCache[id] = bytes);
+      if (mounted) setState(() => _imagenesCache[id] = bytes);
     } catch (e) {
       debugPrint('Error al cargar imagen #$id: $e');
     }
@@ -180,6 +214,44 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildServerStatusBanner() {
+    if (_serverConnected) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.wifi_off_rounded, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Sin conexión con el servidor. Verifique su red o intente más tarde.',
+              style: TextStyle(color: Colors.red.shade900, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () {
+              _verificarConexion();
+              _cargarEvento();
+              _cargarConfiguracion();
+            },
+            child: Text(
+              _checkingServer ? '...' : 'Reintentar',
+              style: TextStyle(color: Colors.red.shade900, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildFooterSistemaPia() {
@@ -301,6 +373,7 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    _buildServerStatusBanner(),
                     if (!_mostrandoResultados)
                       Row(
                         children: [
@@ -329,7 +402,15 @@ class _BuscarDorsalPageState extends State<BuscarDorsalPage> {
                     if (_error != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 40),
-                        child: Text(_error!, style: const TextStyle(fontSize: 16)),
+                        child: Text(
+                          _error!,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: _serverConnected ? Colors.black87 : Colors.red.shade800,
+                            fontWeight: _serverConnected ? FontWeight.normal : FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     if (_resultados != null && _mostrandoResultados)
                       ...(_resultados!.map((item) {
