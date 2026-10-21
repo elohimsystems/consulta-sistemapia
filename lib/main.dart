@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'services/api_service.dart';
 import 'pages/config_mail_page.dart';
 import 'pages/eventos_list_page.dart';
 import 'pages/buscar_dorsal_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
+  await ApiService.init();
   runApp(const MyApp());
 }
 

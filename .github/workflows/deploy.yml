@@ -19,9 +19,7 @@ jobs:
       - run: flutter pub get
 
       - name: Build
-        env:
-          API_URL: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && secrets.API_URL_PROD || secrets.API_URL }}
-        run: flutter build web --dart-define=API_URL=$API_URL --release
+        run: flutter build web --release
 
       - run: cp web/.htaccess build/web/.htaccess
 

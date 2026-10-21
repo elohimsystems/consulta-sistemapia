@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class ServerConnectionException implements Exception {
@@ -17,7 +19,19 @@ class NotFoundException implements Exception {
 }
 
 class ApiService {
-  static const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:4550');
+  static String baseUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:4550');
+
+  static Future<void> init() async {
+    try {
+      final jsonString = await rootBundle.loadString('assets/config.json');
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+      if (data['apiUrl'] != null && data['apiUrl'].toString().trim().isNotEmpty) {
+        baseUrl = data['apiUrl'].toString().trim();
+      }
+    } catch (e) {
+      debugPrint('No se pudo cargar assets/config.json, usando baseUrl por defecto: $baseUrl ($e)');
+    }
+  }
 
   Future<bool> checkHealth() async {
     try {
