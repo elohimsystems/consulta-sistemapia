@@ -1,7 +1,7 @@
 class AppInfo {
   static const String nombre = 'SistemaPIA';
   static const String version = '1.0.0';
-  static const String empresa = 'ElohimSystemns';
+  static const String empresa = 'ElohimSystems';
   static const List<String> desarrolladores = ['Freddy Garcia', 'Fernando Garcia'];
   static const String _defaultMinApi = '1.0.0';
   static String get minApiVersion {
