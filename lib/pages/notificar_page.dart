@@ -25,6 +25,16 @@ class _NotificarPageState extends State<NotificarPage> {
   final Set<int> _selectedIds = {};
   bool _sending = false;
 
+  bool _isValidEmail(String? email) {
+    if (email == null) return false;
+    final clean = email.trim();
+    if (clean.isEmpty || clean.toLowerCase() == 'n/a' || clean.toLowerCase() == 'sin correo' || clean.toLowerCase() == 'no posee') {
+      return false;
+    }
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    return emailRegex.test(clean);
+  }
+
   List<Map<String, dynamic>> get _filteredItems {
     var items = _items;
     if (_filter.isNotEmpty) {
@@ -119,7 +129,7 @@ class _NotificarPageState extends State<NotificarPage> {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
                 fallidos.isNotEmpty
-                    ? 'Enviados: $enviados. Fallidos: ${fallidos.length}.'
+                    ? 'Enviados: $enviados. Fallidos/Sin email: ${fallidos.length}.'
                     : 'Enviados: $enviados.',
               ),
               duration: const Duration(seconds: 4),
@@ -316,11 +326,26 @@ class _NotificarPageState extends State<NotificarPage> {
   Future<void> _cargar() async {
     setState(() => _loading = true);
     try {
+      final cfg = await _api.getConfig();
+      if (mounted && cfg['pageSize'] != null) {
+        final ps = int.tryParse(cfg['pageSize'].toString());
+        if (ps != null && ps > 0) {
+          _pageSize = ps;
+        }
+      }
+    } catch (_) {}
+
+    try {
       final res = await _api.getInscritosPorEvento(widget.idevento);
-      setState(() { _items = res.cast<Map<String, dynamic>>(); _loading = false; });
+      if (mounted) {
+        setState(() {
+          _items = res.cast<Map<String, dynamic>>();
+          _loading = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error al cargar inscritos: $e');
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -486,6 +511,8 @@ class _NotificarPageState extends State<NotificarPage> {
                         ..._paginatedItems.map((item) {
                           final id = int.parse(item['id'].toString());
                           final sel = _selectedIds.contains(id);
+                          final mailStr = _email(item);
+                          final validMail = _isValidEmail(mailStr);
                           return Container(
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
@@ -502,8 +529,12 @@ class _NotificarPageState extends State<NotificarPage> {
                                 SizedBox(
                                   width: colWidths[3],
                                   child: Text(
-                                    _email(item),
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    validMail ? mailStr : (mailStr.isEmpty ? 'Sin email' : '$mailStr (Inválido)'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: validMail ? Colors.grey.shade800 : Colors.red.shade700,
+                                      fontWeight: validMail ? FontWeight.normal : FontWeight.bold,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
