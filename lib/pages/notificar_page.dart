@@ -32,7 +32,7 @@ class _NotificarPageState extends State<NotificarPage> {
       return false;
     }
     final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    return emailRegex.test(clean);
+    return emailRegex.hasMatch(clean);
   }
 
   List<Map<String, dynamic>> get _filteredItems {
